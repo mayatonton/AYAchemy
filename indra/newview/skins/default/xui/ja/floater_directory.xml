@@ -61,4 +61,5 @@
 	<button name="PageDn"/>
 	<button name="PageUp"/>
 	<loading_indicator name="loading"/>
+	<button name="popout" tool_tip="検索結果を新しいウィンドウで開きます。"/>
 </floater>

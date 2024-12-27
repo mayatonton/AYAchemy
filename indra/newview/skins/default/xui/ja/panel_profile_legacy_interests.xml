@@ -23,7 +23,7 @@
 	<check_box label="カスタムキャラクター" name="can_characters"/>
 	<line_editor name="can_something"/>
 	<text name="language_label">
-        言語：
+		言語：
 	</text>
 	<line_editor name="languages"/>
 </panel>
