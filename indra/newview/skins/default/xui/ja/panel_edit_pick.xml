@@ -5,7 +5,7 @@
 	</panel.string>
 	<button name="back_btn"/>
 	<text name="title">
-        ピックを編集
+		ピックを編集
 	</text>
 	<scroll_container name="profile_scroll">
 		<panel name="scroll_content_panel">
