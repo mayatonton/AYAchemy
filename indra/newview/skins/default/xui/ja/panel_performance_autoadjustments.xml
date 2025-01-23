@@ -47,7 +47,7 @@
 	<text name="simplify_dist_desc">
 		遠くにいるアバターの表示の詳細度を減らすと、グラフィックスの速度が向上します。
 	</text>
-	<check_box label="アバターをさらに簡素化" name="AutoTuneImpostorByDistEnabled" tool_tip="有効にするとビューアは、MaxNonImpostorsの設定を調整して、完全にレンダリングされるアバターを指定された半径内のアバターに限定します。"/>
+	<check_box label="アバターをさらに簡素化" name="AutoTuneImpostorByDistEnabled" tool_tip="有効にするとビューアは、MaxNonImpostorsの設定を調整して、完全に描画されるアバターを指定された半径内のアバターに限定します。"/>
 	<spinner name="ffa_autotune"/>
 	<text name="dist_meters">
 		メートル

@@ -368,7 +368,7 @@
 			<menu_item_check label="土地のツールチップを表示" name="Land Tips"/>
 			<menu_item_check label="すべてのオブジェクトのツールチップを表示" name="Tips On All Objects"/>
 		</menu>
-		<menu label="レンダリング種別" name="Rendering Types">
+		<menu label="描画種別" name="Rendering Types">
 			<menu_item_check label="シンプル" name="Rendering Type Simple"/>
 			<menu_item_check label="マテリアル" name="Rendering Type Materials"/>
 			<menu_item_check label="アルファマスク" name="Rendering Type Alpha Mask"/>
@@ -388,7 +388,7 @@
 			<menu_item_check label="パーティクル" name="Rendering Type Particles"/>
 			<menu_item_check label="衝突" name="Rendering Type Bump"/>
 		</menu>
-		<menu label="レンダリング機能" name="Rendering Features">
+		<menu label="描画機能" name="Rendering Features">
 			<menu_item_check label="ＵＩ" name="ToggleUI"/>
 			<menu_item_check label="選択済" name="Selected"/>
 			<menu_item_check label="ハイライト" name="Highlighted"/>
@@ -515,7 +515,7 @@
 				<menu_item_check label="全て" name="Full"/>
 			</menu>
 		</menu>
-		<menu label="レンダリング" name="Rendering">
+		<menu label="描画" name="Rendering">
 			<menu_item_check label="軸" name="Axes"/>
 			<menu_item_check label="接線基準" name="Tangent Basis"/>
 			<menu_item_call label="選択されたテクスチャ情報基準" name="Selected Texture Info Basis"/>

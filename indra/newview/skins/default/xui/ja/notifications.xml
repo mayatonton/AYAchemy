@@ -2125,7 +2125,7 @@ https://www.alchemyviewer.org/downloads.html
 		ログインするには、バージョン[VERSION]が必要です。
 リリースノート：[URL]
 
-OKをクリックして、ダウンロードとインストールを開始します。
+ＯＫをクリックして、ダウンロードとインストールを開始します。
 		<tag>confirm</tag>
 		<usetemplate name="okbutton" yestext="ＯＫ"/>
 	</notification>
@@ -3309,7 +3309,7 @@ Webページにリンクすると、他人がこの場所に簡単にアクセ�
 		残念ながら自分自身をフレンド登録することはできません。
 	</notification>
 	<notification name="AddSelfRenderExceptions">
-		あなた自身をレンダリングの例外リストに加えることはできません。
+		あなた自身を描画の例外リストに加えることはできません。
 	</notification>
 	<notification name="UploadingAuctionSnapshot">
 		インワールドとWebサイトのスナップショットをアップロードしています…

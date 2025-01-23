@@ -83,10 +83,10 @@
 			<spinner name="tonemapper_dynamic_spinner7"/>
 		</panel>
 		<!--Rendering Panel-->
-		<panel label="レンダリング" name="render_settings">
+		<panel label="描画" name="render_settings">
 			<!--Probe Detail-->
-			<text tool_tip="レンダリングを許可するプローブタイプの最大値を制御します。静的のみは動的プローブの設定を上書きします。リアルタイムは、１フレームおきに最も近い動的プローブを更新します。" value="プローブの詳細："/>
-			<combo_box tool_tip="レンダリングを許可するプローブタイプの最大値を制御します。静的のみは動的プローブの設定を上書きします。リアルタイムは、１フレームおきに最も近い動的プローブを更新します。" name="probeDetail_combo">
+			<text tool_tip="描画を許可するプローブタイプの最大値を制御します。静的のみは動的プローブの設定を上書きします。リアルタイムは、１フレームおきに最も近い動的プローブを更新します。" value="プローブの詳細："/>
+			<combo_box tool_tip="描画を許可するプローブタイプの最大値を制御します。静的のみは動的プローブの設定を上書きします。リアルタイムは、１フレームおきに最も近い動的プローブを更新します。" name="probeDetail_combo">
 				<combo_box.item label="静的のみ" name="probeDetail_static" value="0"/>
 				<combo_box.item label="静的＋動的" name="probeDetail_dynamic" value="1"/>
 				<combo_box.item label="リアルタイム" name="probeDetail_realtime" value="2"/>
@@ -113,9 +113,9 @@
 				<combo_box.item label="高（1024px）" name="Mirror_High" value="1024"/>
 				<combo_box.item label="最高（2048px）" name="Mirror_Ultra" value="2048"/>
 			</combo_box>
-			<text tool_tip="ミラーが更新を待機するレンダリングされたフレームの数を設定します。ジッタを犠牲にして平均ＦＰＳを向上させることができます。" value="更新の遅延レート："/>
-			<slider name="mirrorUpdateRateSlider" tool_tip="ミラーが更新を待機するレンダリングされたフレームの数を設定します。ジッタを犠牲にして平均ＦＰＳを向上させることができます。"/>
-			<spinner tool_tip="ミラーが更新を待機するレンダリングされたフレームの数を設定します。ジッタを犠牲にして平均ＦＰＳを向上させることができます。" name="mirrorUpdateRateSpinner"/>
+			<text tool_tip="ミラーが更新を待機する描画されたフレームの数を設定します。ジッタを犠牲にして平均ＦＰＳを向上させることができます。" value="更新の遅延レート："/>
+			<slider name="mirrorUpdateRateSlider" tool_tip="ミラーが更新を待機する描画されたフレームの数を設定します。ジッタを犠牲にして平均ＦＰＳを向上させることができます。"/>
+			<spinner tool_tip="ミラーが更新を待機する描画されたフレームの数を設定します。ジッタを犠牲にして平均ＦＰＳを向上させることができます。" name="mirrorUpdateRateSpinner"/>
 			<!--Probe Draw Distance-->
 			<!--
 			<text tool_tip="（デフォルト：６４ｍ）反射プローブで参照される最大オブジェクト距離です。距離が長いほど場面に対してより正確なプローブ描画が可能になりますが、その分生成時間やパフォーマンスが犠牲になります。" value="プローブの描画距離："/>
@@ -144,9 +144,9 @@
 			</combo_box>
 			<!--Resolution Scale-->
 			<!--TODO: Disable if AA is also disabled. This option causes broken rendering otherwise! Bug maybe?-->
-			<text tool_tip="（デフォルト：1.0）［危険］内部レンダリング解像度スケールを指定します。画像の鮮鋭化はこの設定とあまり相互作用しないため、最良の結果を得るには無効にしてください。" value="解像度スケール："/>
-			<slider_bar name="resMult_slider" tool_tip="（デフォルト：1.0）［危険］内部レンダリング解像度スケールを指定します。画像の鮮鋭化はこの設定とあまり相互作用しないため、最良の結果を得るには無効にしてください。"/>
-			<spinner name="resMult_spinner" tool_tip="（デフォルト：1.0）［危険］内部レンダリング解像度スケールを指定します。画像の鮮鋭化はこの設定とあまり相互作用しないため、最良の結果を得るには無効にしてください。"/>
+			<text tool_tip="（デフォルト：1.0）［危険］内部描画解像度スケールを指定します。画像の鮮鋭化はこの設定とあまり相互作用しないため、最良の結果を得るには無効にしてください。" value="解像度スケール："/>
+			<slider_bar name="resMult_slider" tool_tip="（デフォルト：1.0）［危険］内部描画解像度スケールを指定します。画像の鮮鋭化はこの設定とあまり相互作用しないため、最良の結果を得るには無効にしてください。"/>
+			<spinner name="resMult_spinner" tool_tip="（デフォルト：1.0）［危険］内部描画解像度スケールを指定します。画像の鮮鋭化はこの設定とあまり相互作用しないため、最良の結果を得るには無効にしてください。"/>
 			<!--Draw Distance-->
 			<text value="描画距離："/>
 			<slider_bar name="draw_dist_slider_bar"/>
@@ -253,9 +253,9 @@
 			<!--Glow Toggle-->
 			<check_box label="グローシェーダーの使用" tool_tip="グロー切り替え（レンダラーがリロードされます！）"/>
 			<!--Glow Iterations-->
-			<text tool_tip="使用するグローシェーダのパスの数を指定します。パスが増えると、全体的に強くなり、柔らかくなり、幅が広くなり、レンダリングが遅くなります。" value="反復数："/>
-			<slider_bar name="glow_iteration_slider" tool_tip="使用するグローシェーダのパスの数を指定します。パスが増えると、全体的に強くなり、柔らかくなり、幅が広くなり、レンダリングが遅くなります。"/>
-			<spinner name="glow_iteration_spinner" tool_tip="使用するグローシェーダのパスの数を指定します。パスが増えると、全体的に強くなり、柔らかくなり、幅が広くなり、レンダリングが遅くなります。"/>
+			<text tool_tip="使用するグローシェーダのパスの数を指定します。パスが増えると、全体的に強くなり、柔らかくなり、幅が広くなり、描画が遅くなります。" value="反復数："/>
+			<slider_bar name="glow_iteration_slider" tool_tip="使用するグローシェーダのパスの数を指定します。パスが増えると、全体的に強くなり、柔らかくなり、幅が広くなり、描画が遅くなります。"/>
+			<spinner name="glow_iteration_spinner" tool_tip="使用するグローシェーダのパスの数を指定します。パスが増えると、全体的に強くなり、柔らかくなり、幅が広くなり、描画が遅くなります。"/>
 			<button name="glowIteration_default_btn"/>
 			<!--Glow Resolution-->
 			<text tool_tip="グローの全体的な解像度。値を高くするとより広範囲のグローが可能になります。最高の効果を得るには、他のグロー設定と組み合わせて使用します。" value="解像度："/>
@@ -283,8 +283,8 @@
 			<check_box label="前景のブラーを有効化" tool_tip="このオプションは、被写界深度使用時に前景のぼかしを切り替えるもので、必要に応じて背景のみをぼかすことができます。" name="RenderDepthOfFieldFront"/>
 			<!--DOF Resolution-->
 			<!--TODO: Ensure this setting is temporary? Large CoC @ Full Res has caused Login-Crashes on other viewers, even on high end GPUs!-->
-			<text tool_tip="被写界深度（ＤｏＦ）のレンダリングに使用する画面解像度の割合を指定します。注：フル解像度の使用時にＤｏＦが激しくなると、ビューアが応答しなくなる可能性があります。" value="ＤｏＦ解像度："/>
-			<combo_box tool_tip="被写界深度（ＤｏＦ）のレンダリングに使用する画面解像度の割合を指定します。注：フル解像度の使用時にＤｏＦが激しくなると、ビューアが応答しなくなる可能性があります。" name="dof_res_combo">
+			<text tool_tip="被写界深度（ＤｏＦ）の描画に使用する画面解像度の割合を指定します。注：フル解像度の使用時にＤｏＦが激しくなると、ビューアが応答しなくなる可能性があります。" value="ＤｏＦ解像度："/>
+			<combo_box tool_tip="被写界深度（ＤｏＦ）の描画に使用する画面解像度の割合を指定します。注：フル解像度の使用時にＤｏＦが激しくなると、ビューアが応答しなくなる可能性があります。" name="dof_res_combo">
 				<combo_box.item label="１／４" name="dof_quarterres" value="0.25"/>
 				<combo_box.item label="１／２" name="dof_halfres" value="0.5"/>
 				<combo_box.item label="３／４" name="dof_threefourthres" value="0.7"/>

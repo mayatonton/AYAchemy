@@ -14,9 +14,6 @@
 			<text name="online">
 				オンライン
 			</text>
-			<icon name="account_type_internal"/>
-			<icon name="account_type_premium"/>
-			<icon name="account_type_plus"/>
 			<text name="rezday">
 				（不明）
 			</text>

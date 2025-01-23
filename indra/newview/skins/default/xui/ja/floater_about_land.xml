@@ -409,11 +409,11 @@
 				このテクスチャを使用するオブジェクトの「再生」をクリックすると、動画やWebページを表示します。テクスチャを変更するにはサムネイルを選択してください。
 			</text>
 			<check_box label="スケールを自動設定" name="media_auto_scale" tool_tip="このオプションをチェックすると、この区画のコンテンツのスケールが自動的に設定されます。動作速度と画質が少し低下することがありますが、他のテクスチャのスケーリングや整列が必要になることはありません。"/>
-			<text name="media_size" tool_tip="レンダリングするWebメディアのサイズです。デフォルトの０のままにします。">
+			<text name="media_size" tool_tip="描画するWebメディアのサイズです。デフォルトの０のままにします。">
 				サイズ：
 			</text>
-			<spinner name="media_size_width" tool_tip="レンダリングするWebメディアのサイズです。デフォルトの０のままにします。"/>
-			<spinner name="media_size_height" tool_tip="レンダリングするWebメディアのサイズです。デフォルトの０のままにします。"/>
+			<spinner name="media_size_width" tool_tip="描画するWebメディアのサイズです。デフォルトの０のままにします。"/>
+			<spinner name="media_size_height" tool_tip="描画するWebメディアのサイズです。デフォルトの０のままにします。"/>
 			<text name="pixels">
 				ピクセル
 			</text>
