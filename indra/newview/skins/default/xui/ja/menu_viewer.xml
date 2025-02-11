@@ -39,7 +39,7 @@
 		<menu_item_call label="シェイプの編集…" name="Edit My Shape"/>
 		<menu_item_call label="アウトフィットパーツの編集…" name="Edit Outfit"/>
 		<menu label="脱ぐ" name="Take Off &gt;">
-			<menu label="服装" name="Clothes &gt;">
+			<menu label="衣装" name="Clothes &gt;">
 				<menu_item_call label="シャツ" name="Shirt"/>
 				<menu_item_call label="ズボン" name="Pants"/>
 				<menu_item_call label="スカート" name="Skirt"/>
@@ -53,7 +53,7 @@
 				<menu_item_call label="物理作用" name="Self Physics"/>
 				<menu_item_call label="アルファ" name="Self Alpha"/>
 				<menu_item_separator/>
-				<menu_item_call label="すべての服装" name="All Clothes"/>
+				<menu_item_call label="すべての衣装" name="All Clothes"/>
 			</menu>
 			<menu label="ＨＵＤ" name="Avatar Detach HUD"/>
 			<menu label="取り外す" name="Avatar Detach"/>
@@ -692,7 +692,7 @@
 	<menu label="管理" name="Deprecated">
 		<menu label="オブジェクトを取り付ける" name="Attach Object"/>
 		<menu label="オブジェクトを取り外す" name="Detach Object"/>
-		<menu label="服装を脱ぐ" name="Take Off Clothing">
+		<menu label="衣装を脱ぐ" name="Take Off Clothing">
 			<menu_item_call label="シャツ" name="Shirt"/>
 			<menu_item_call label="ズボン" name="Pants"/>
 			<menu_item_call label="靴" name="Shoes"/>
@@ -706,7 +706,7 @@
 			<menu_item_call label="タトゥ" name="Tattoo"/>
 			<menu_item_call label="ユニバーサル" name="Universal"/>
 			<menu_item_call label="物理作用" name="Physics"/>
-			<menu_item_call label="すべての服装" name="All Clothes"/>
+			<menu_item_call label="すべての衣装" name="All Clothes"/>
 		</menu>
 		<menu label="ヘルプ" name="DeprecatedHelp">
 			<menu_item_call label="Linden公式ブログ" name="Official Linden Blog"/>

@@ -474,7 +474,7 @@
 			<!-- 作用は射影テクスチャマッピングなので意訳 -->
 			<check_box label="射影元" name="Light Checkbox Ctrl" tool_tip="オブジェクトが投影元になります。"/>
 			<color_swatch name="colorswatch" tool_tip="クリックしてカラーピッカーを開きます"/>
-			<texture_picker label="画像" name="light texture control" tool_tip="クリックで射影テクスチャを選択します。（遅延レンダリング有効時のみ）"/>
+			<texture_picker label="画像" name="light texture control" tool_tip="クリックで射影テクスチャを選択します。（遅延描画有効時のみ）"/>
 			<button name="copy_light_btn" tool_tip="光源と反射プローブのパラメータをコピーします。"/>
 			<button name="paste_light_btn" tool_tip="光源と反射プローブのパラメータをペーストします。"/>
 			<button name="pipette_light_btn" tool_tip="ピペットツールで光源と反射プローブのパラメータをペーストします。"/>

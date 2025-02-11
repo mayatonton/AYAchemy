@@ -9,7 +9,7 @@
 	<icon name="rating_icon_adult"/>
 	<check_box label="価格＜" name="price_check"/>
 	<line_editor name="edit_price"/>
-	<check_box label="エリア＞" name="area_check"/>
+	<check_box label="面積＞" name="area_check"/>
 	<line_editor name="edit_area"/>
 	<combo_box name="land_type">
 		<combo_box.item label="全てのカテゴリ" name="All"/>
@@ -21,7 +21,7 @@
 		<combo_box.item label="名前" name="Name_item"/>
 		<combo_box.item label="金額" name="Price_item"/>
 		<combo_box.item label="ｍあたりの単価" name="PPM_item"/>
-		<combo_box.item label="エリア" name="Area_item"/>
+		<combo_box.item label="面積" name="Area_item"/>
 	</combo_box>
 	<check_box label="昇順" name="ascending"/>
 </panel>
