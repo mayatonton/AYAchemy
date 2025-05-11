@@ -9,24 +9,20 @@
 	<string name="save_label">
 		保存
 	</string>
-	<button name="back_btn" />
 	<text name="title">
 		クラシファイドを編集
 	</text>
 	<scroll_container name="profile_scroll">
 		<panel name="scroll_content_panel">
 			<panel name="snapshot_panel">
-				<texture_picker name="classified_snapshot" />
-				<icon name="edit_icon" label="" tool_tip="クリックで画像を選択します。"/>
+				<icon name="edit_icon"  tool_tip="クリックで画像を選択します。"/>
 			</panel>
 			<text name="Name:">
 				タイトル：
 			</text>
-			<line_editor name="classified_name"/>
 			<text name="description_label">
 				説明：
 			</text>
-			<text_editor name="classified_desc"/>
 			<text name="location_label">
 				場所：
 			</text>
@@ -35,7 +31,6 @@
 			</text>
 			<button label="現在の場所をセット" name="set_to_curr_location_btn"/>
 			<text name="category_label" value="カテゴリ："/>
-			<combo_box label="" name="category"/>
 			<text name="content_type_label" value="コンテンツ種別："/>
 			<icons_combo_box label="「General」コンテンツ" name="content_type">
 				<icons_combo_box.item label="「Moderate」コンテンツ" name="mature_ci"/>

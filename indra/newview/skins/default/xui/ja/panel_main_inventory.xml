@@ -43,17 +43,4 @@
 			<inventory_panel label="着用中" name="Worn Items"/>
 		</tab_container>
 	</panel>
-	<panel name="combination_view_inventory">
-		<layout_stack name="combination_view_stack">
-			<layout_panel name="comb_gallery_layout">
-				<panel name="comb_gallery_view_inv"/>
-			</layout_panel>
-			<layout_panel name="comb_inventory_layout">
-				<single_folder_inventory_panel name="comb_single_folder_inv">
-					<item/>
-					<folder/>
-				</single_folder_inventory_panel>
-			</layout_panel>
-		</layout_stack>
-	</panel>
 </panel>

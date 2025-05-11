@@ -62,14 +62,6 @@
 			<combo_box.item label="フィルタなし" name="NoFilter" value="NoFilter"/>
 		</combo_box>
 	</panel>
-	<panel_container name="panel_container">
-		<panel name="panel_snapshot_options"/>
-		<panel name="panel_snapshot_profile"/>
-		<panel name="panel_snapshot_postcard"/>
-		<panel name="panel_snapshot_inventory"/>
-		<panel name="panel_snapshot_local"/>
-	</panel_container>
-	<view_border name="status_hr"/>
 	<panel name="succeeded_panel">
 		<text name="succeeded_lbl">
 			成功しました
@@ -87,8 +79,6 @@
 	<text name="refresh_lbl">
 		リフレッシュして保存
 	</text>
-	<ui_ctrl name="thumbnail_placeholder"/>
-	<view_border name="img_info_border"/>
 	<text name="image_res_text">
 		[WIDTH]px（幅）×[HEIGHT]px（高さ）
 	</text>

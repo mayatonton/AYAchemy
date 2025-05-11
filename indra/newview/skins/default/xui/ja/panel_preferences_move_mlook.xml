@@ -9,7 +9,6 @@
 	<text name=" Mouse Sensitivity">
 		マウスルック時の敏感度：
 	</text>
-	<slider name="mouse_sensitivity"/>
 	<check_box label="反転" name="invert_mouse"/>
 	<text name="Combat Features">
 		ゲームプレイ機能：
@@ -21,6 +20,4 @@
 	<text name="IFF Range">
 		マウスルックの範囲：
 	</text>
-	<slider name="iff_range_slider"/>
-	<spinner label="" name="iff_range_spinner"/>
 </panel>

@@ -12,7 +12,7 @@
 		メンバーのデータを検索
 	</panel.string>
 	<panel name="group_info_top">
-		<texture_picker label="" name="insignia" tool_tip="クリックして画像を選択します。"/>
+		<texture_picker  name="insignia" tool_tip="クリックして画像を選択します。"/>
 		<text name="prepend_founded_by">
 			創設者：
 		</text>

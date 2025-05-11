@@ -30,7 +30,6 @@
 		<text name="total_upload_fee">
 			アップロード費用：L$ [FEE]
 		</text>
-		<view_border name="button_border"/>
 		<button label="キャンセル" name="cancel"/>
 	</panel>
 </floater>

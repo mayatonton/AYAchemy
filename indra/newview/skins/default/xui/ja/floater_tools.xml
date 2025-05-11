@@ -64,7 +64,6 @@
 		<radio_item label="旋回（Ctrl）" name="radio orbit"/>
 		<radio_item label="水平・垂直移動 (Ctrl＋Shift)" name="radio pan"/>
 	</radio_group>
-	<slider_bar name="slider zoom"/>
 	<radio_group name="move_radio_group">
 		<radio_item label="移動" name="radio move"/>
 		<radio_item label="持ち上げる（Ctrl）" name="radio lift"/>
@@ -138,11 +137,9 @@
 	<text name="selection_empty">
 		選択されていません。
 	</text>
-	<text name="selection_count"/>
 	<text name="remaining_capacity">
 		[CAPACITY_STRING] [secondlife:///app/openfloater/object_weights 詳細情報]
 	</text>
-	<view_border name="cost_text_border"/>
 	<tab_container name="Object Info Tabs">
 		<panel label="一般" name="General">
 			<panel.string name="text deed continued">
@@ -260,7 +257,7 @@
 				<check_box label="修正" name="checkbox next owner can modify" tool_tip="次の所有者は、アイテム名などのプロパティ内容を編集したり、このオブジェクトのサイズを変更することができます。"/>
 				<check_box label="コピー" name="checkbox next owner can copy" tool_tip="次の所有者は、このオブジェクトを無制限にコピーできます。コピーには制作者の情報が含まれ、コピー元のアイテムと異なり許可設定などに制約があります。"/>
 				<check_box label="再販・譲渡" name="checkbox next owner can transfer" tool_tip="次の所有者は、このオブジェクトを他人に譲渡したり再販することができます。"/>
-				<!-- *NOTE: These "B/O/G/E/N/F fields may overlap "perm_modify" above, 
+				<!-- *NOTE: These "B/O/G/E/N/F fields may overlap "perm_modify" above,
 				but that's OK, this is used only for debugging. -->
 				<text name="B:">
 					Ｂ：
@@ -305,7 +302,6 @@
 			<check_box label="物理的" name="Physical Checkbox Ctrl" tool_tip="オブジェクトを押したり、重力の影響を受けるようにします。"/>
 			<check_box label="一時的" name="Temporary Checkbox Ctrl" tool_tip="作成から１分後にオブジェクトを削除します。"/>
 			<check_box label="ファントム" name="Phantom Checkbox Ctrl" tool_tip="オブジェクトが他のオブジェクトやアバターと衝突しないようにします。"/>
-			<view_border name="object_horizontal"/>
 			<text name="label position" tool_tip="位置（メートル）">
 				位置（メートル）
 			</text>
@@ -376,8 +372,6 @@
 			<text name="text skew">
 				傾斜
 			</text>
-			<spinner name="Scale 1"/>
-			<spinner name="Skew"/>
 			<text name="Hollow Shape">
 				中空の形状
 			</text>
@@ -427,8 +421,6 @@
 			<text name="text revolutions">
 				回転体
 			</text>
-			<spinner name="Radius Offset"/>
-			<spinner name="Revolutions"/>
 			<texture_picker label="スカルプトテクスチャ" name="sculpt texture control" tool_tip="画像を選択してください。"/>
 			<check_box label="ミラー" name="sculpt mirror control" tool_tip="スカルプトプリムをＸ軸に沿って反転させます。"/>
 			<check_box label="裏返す" name="sculpt invert control" tool_tip="スカルプトプリムの法線を反転し、裏返しに見えるようにします。"/>

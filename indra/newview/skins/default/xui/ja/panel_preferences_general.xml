@@ -50,8 +50,8 @@
 		特定キーを押したときの動作：
 	</text>
 	<radio_group name="inworld_typing_preference">
-		<radio_item label="チャットを始める" name="radio_start_chat" value="1"/>
-		<radio_item label="移動する（WSADなど）" name="radio_move" value="0"/>
+		<radio_item label="チャットを始める" name="radio_start_chat"/>
+		<radio_item label="移動する（WSADなど）" name="radio_move"/>
 	</radio_group>
 	<text name="title_afk_text">
 		「離席中」とするまでの時間：

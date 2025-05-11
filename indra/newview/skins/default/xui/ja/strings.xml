@@ -3309,17 +3309,11 @@ For AI Character: Get the closest navigable point to the point provided.
 	<string name="InventoryInboxNoItems">
 		マーケットプレイスで購入した商品はここに表示されます。その後、アイテムをインベントリにドラッグすれば、それらのアイテムを使用できます。
 	</string>
-	<string name="MarketplaceURL"> https://marketplace.[MARKETPLACE_DOMAIN_NAME]/?lang=ja-JP
-	</string>
-	<string name="MarketplaceURL_CreateStore">
-		https://community.secondlife.com/knowledgebase/%E6%97%A5%E6%9C%AC%E8%AA%9E%E3%83%8A%E3%83%AC%E3%83%83%E3%82%B8%E3%83%99%E3%83%BC%E3%82%B9/%E3%83%9E%E3%83%BC%E3%82%B1%E3%83%83%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4%E3%82%B9%E3%81%A7%E8%B2%A9%E5%A3%B2%E3%81%99%E3%82%8B-r769/
-	</string>
-	<string name="MarketplaceURL_Dashboard"> https://marketplace.[MARKETPLACE_DOMAIN_NAME]/merchants/store/dashboard?lang=ja-JP
-	</string>
-	<string name="MarketplaceURL_Imports"> https://marketplace.[MARKETPLACE_DOMAIN_NAME]/merchants/store/imports?lang=ja-JP
-	</string>
-	<string name="MarketplaceURL_LearnMore"> https://marketplace.[MARKETPLACE_DOMAIN_NAME]/learn_more?lang=ja-JP
-	</string>
+	<string name="MarketplaceURL">https://marketplace.[MARKETPLACE_DOMAIN_NAME]/?lang=ja-JP</string>
+	<string name="MarketplaceURL_CreateStore">https://community.secondlife.com/knowledgebase/%E6%97%A5%E6%9C%AC%E8%AA%9E%E3%83%8A%E3%83%AC%E3%83%83%E3%82%B8%E3%83%99%E3%83%BC%E3%82%B9/%E3%83%9E%E3%83%BC%E3%82%B1%E3%83%83%E3%83%88%E3%83%97%E3%83%AC%E3%82%A4%E3%82%B9%E3%81%A7%E8%B2%A9%E5%A3%B2%E3%81%99%E3%82%8B-r769/</string>
+	<string name="MarketplaceURL_Dashboard"> https://marketplace.[MARKETPLACE_DOMAIN_NAME]/merchants/store/dashboard?lang=ja-JP</string>
+	<string name="MarketplaceURL_Imports"> https://marketplace.[MARKETPLACE_DOMAIN_NAME]/merchants/store/imports?lang=ja-JP</string>
+	<string name="MarketplaceURL_LearnMore"> https://marketplace.[MARKETPLACE_DOMAIN_NAME]/learn_more?lang=ja-JP</string>
 	<string name="InventoryPlayAnimationTooltip">
 		「再生」オプションでウィンドウを開きます。
 	</string>
@@ -3332,14 +3326,12 @@ For AI Character: Get the closest navigable point to the point provided.
 	<string name="InventoryOutboxNotMerchantTitle">
 		マーケットプレイスでは誰でもアイテムを売ることができます。
 	</string>
-	<string name="InventoryOutboxNotMerchantTooltip"/>
 	<string name="InventoryOutboxNotMerchant">
 		販売者になりたい方は、[[MARKETPLACE_CREATE_STORE_URL] マーケットプレイスストアを作成]する必要があります。
 	</string>
 	<string name="InventoryOutboxNoItemsTitle">
 		アウトボックスは空です。
 	</string>
-	<string name="InventoryOutboxNoItemsTooltip"/>
 	<string name="InventoryOutboxNoItems">
 		[[MARKETPLACE_DASHBOARD_URL] マーケットプレイス]に販売するアイテムを一覧するには、フォルダをこのエリアにドラッグし、「マーケットプレイスに送信」をクリックします。
 	</string>

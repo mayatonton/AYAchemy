@@ -849,7 +849,7 @@ L$が不足しているので、このグループに参加することができ
 		ファイルをダウンロードできません。
 		<tag>fail</tag>
 	</notification>
-	<notification label="" name="MediaFileDownloadUnsupported">
+	<notification  name="MediaFileDownloadUnsupported">
 		ダウンロードをリクエストしたファイルは、[APP_NAME]ではサポートされていません。
 		<unique/>
 		<tag>confirm</tag>
@@ -4552,7 +4552,7 @@ UDP：3478, 3479, 5060, 5062, 6250, 12000-32000
 		歩行や走行は、「移動」パネルを開き、矢印コントロールによって操作します。この操作はキーボードの矢印キーで実行することも可能です。
 		<unique/>
 	</notification>
-	<notification label="" name="HintMoveClick">
+	<notification  name="HintMoveClick">
 		１，クリックで移動
 地表をクリックすると、その場所まで歩きます。
 
@@ -4654,84 +4654,84 @@ UDP：3478, 3479, 5060, 5062, 6250, 12000-32000
 			<button name="cancel" text="キャンセル"/>
 		</form>
 	</notification>
-	<notification label="" name="NoClassifieds">
+	<notification  name="NoClassifieds">
 		クラシファイド広告の作成と編集は、高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoGroupInfo">
+	<notification  name="NoGroupInfo">
 		グループの作成と編集は高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoPlaceInfo">
+	<notification  name="NoPlaceInfo">
 		場所のプロフィールの表示は高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoPicks">
+	<notification  name="NoPicks">
 		ピックの作成と編集は高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoWorldMap">
+	<notification  name="NoWorldMap">
 		ワールドマップの表示は高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoVoiceCall">
+	<notification  name="NoVoiceCall">
 		ボイスコールは高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoAvatarShare">
+	<notification  name="NoAvatarShare">
 		共有は高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoAvatarPay">他
+	<notification  name="NoAvatarPay">他
 		の住人への支払いは高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoInventory">
+	<notification  name="NoInventory">
 		インベントリの表示は高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoAppearance">
+	<notification  name="NoAppearance">
 		容姿エディタは高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoSearch">
+	<notification  name="NoSearch">
 		検索は高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="ConfirmHideUI">
+	<notification  name="ConfirmHideUI">
 		この操作により、全てのメニュー項目とボタンが非表示になります。再び表示するには、[SHORTCUT]をもう一度クリックしてください。
 		<unique/>
 		<tag>confirm</tag>
@@ -6215,7 +6215,7 @@ Intelドライバーのウェブサイトを確認しますか？
 	<notification name="AlwaysRunDisabled">
 		常時走行が無効になりました。
 	</notification>
-	<notification name="CinematicConfirmHideUI" label="">
+	<notification name="CinematicConfirmHideUI" >
 		シネマティックモードでは、ほとんどのＵＩ、ホバー テキスト、音声ドット、ＨＵＤが非表示になります。
 元に戻すには、[SHORTCUT]を押します。
 		<unique/>
