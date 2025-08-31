@@ -9,8 +9,8 @@
 			<combo_box tool_tip="画像に対するカラーグレーディングＬＵＴ（ルックアップテーブル）を指定します。カスタムＬＵＴには完全なファイル名が必要です！" name="colorlut_combo">
 				<combo_box.item label="なし" name="lut_none"/>
 				<combo_box.item label="ナチュラル" name="lut_neutral"/>
-				<combo_box.item label="クロスプロセス‐暖色" name="lut_xprocess_warm"/>
-				<combo_box.item label="クロスプロセス‐寒色" name="lut_xprocess_cool"/>
+				<combo_box.item label="クロスプロセス－暖色" name="lut_xprocess_warm"/>
+				<combo_box.item label="クロスプロセス－寒色" name="lut_xprocess_cool"/>
 				<combo_box.item label="アシッド・トリップ" name="lut_acidTrip"/>
 				<combo_box.item label="バトルブルー" name="lut_battleblue"/>
 				<combo_box.item label="サクサク" name="lut_crunchy"/>

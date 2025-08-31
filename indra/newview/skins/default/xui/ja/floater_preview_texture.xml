@@ -13,7 +13,7 @@
 		説明：
 	</text>
 	<text name="dimensions">
-		[WIDTH]px×[HEIGHT]px
+		[WIDTH]px✕[HEIGHT]px
 	</text>
 	<layout_stack name="button_row_ls">
 		<layout_panel name="btn_keep_lp">
