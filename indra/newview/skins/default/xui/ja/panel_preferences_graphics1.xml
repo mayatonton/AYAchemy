@@ -27,16 +27,8 @@
 	<text name="BetterText">
 		品質優先
 	</text>
-	<icon name="LowGraphicsDivet"/>
-	<icon name="LowMidGraphicsDivet"/>
-	<icon name="MidGraphicsDivet"/>
-	<icon name="MidHighGraphicsDivet"/>
-	<icon name="HighGraphicsDivet"/>
-	<icon name="HighUltraGraphicsDivet"/>
-	<icon name="UltraGraphicsDivet"/>
-	<slider name="QualityPerformanceSelection"/>
 	<!-- This block shows Basic Settings -->
-	<slider control_name="RenderFarClip" label="描画距離：" name="DrawDistance"/>
+	<slider label="描画距離：" name="DrawDistance"/>
 	<text name="DrawDistanceMeterText2">ｍ</text>
 	<button label="自動調整" name="AutoAdjustmentsButton"/>
 	<slider label="アバターの最大複雑度：" name="IndirectMaxComplexity" tool_tip="どの程度の複雑度で他のアバターをJellyDollとして描画するを設定します。"/>

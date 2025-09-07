@@ -6,60 +6,12 @@
 	<!-- Collapsed Size 517 -->
 	<!-- Collapsed Size 678 -->
 	<panel name="min_panel" width="680"/>
-	<string name="linear_time" translate="false">
-		0.000+
-	</string>
-	<string name="spherical_time" translate="false">
-		0.001 to 1.0
-	</string>
-	<string name="live_mode_str" translate="false">
-		Poser - Live Editing Mode
-	</string>
-	<string name="creation_mode_str" translate="false">
-		Poser - Create A Pose Mode
-	</string>
-	<string name="icon_category" translate="false">
-		Inv_Shape
-	</string>
-	<string name="icon_bone" translate="false">
-		Transparent
-	</string>
-	<string name="icon_object" translate="false">
-		Inv_Object
-	</string>
-	<string name="title_mPelvis" translate="false">
-		Main Body
-	</string>
-	<string name="title_mHead" translate="false">
-		Head
-	</string>
-	<string name="title_mCollarLeft" translate="false">
-		Left Arm
-	</string>
-	<string name="title_mCollarRight" translate="false">
-		Right Arm
-	</string>
-	<string name="title_mWingsRoot" translate="false">
-		Back
-	</string>
-	<string name="title_mHipLeft" translate="false">
-		Left Leg
-	</string>
-	<string name="title_mHipRight" translate="false">
-		Right Leg
-	</string>
-	<string name="title_mTail1" translate="false">
-		Tail
-	</string>
-	<string name="title_mGroin" translate="false">
-		Misc
-	</string>
 	<layout_stack name="poser_stack">
 		<layout_panel name="poser_list_layout" width="190">
 			<panel name="title" width="180">
 				<panel name="live_panel" width="180">
 					<scroll_list tool_tip="対象となるアバターまたはアニメッシュを選択します。" name="avatar_scroll" width="182">
-						<scroll_list.columns label="" name="icon"/>
+						<scroll_list.columns  name="icon"/>
 						<scroll_list.columns label="名前" name="name"/>
 						<scroll_list.columns label="ＵＵＩＤ" name="uuid"/>
 					</scroll_list>
@@ -81,7 +33,6 @@
 								<panel title="スケルトン" name="joints_panel" width="500">
 									<panel name="title">
 										<scroll_list name="joints_scroll">
-											<scroll_list.columns label="" name="icon"/>
 											<scroll_list.columns label="ボーン名" name="joint"/>
 											<scroll_list.columns label="回転Ｘ" name="x"/>
 											<scroll_list.columns label="回転Ｙ" name="y"/>
@@ -98,7 +49,6 @@
 								</panel>
 								<panel title="衝突量" name="cv_panel"  width="500">
 									<scroll_list name="cv_scroll" width="500">
-										<scroll_list.columns label="" name="icon"/>
 										<scroll_list.columns label="衝突量名" name="joint" relative_width="0.25"/>
 										<scroll_list.columns label="回転Ｘ　" name="x"/>
 										<scroll_list.columns label="回転Ｙ" name="y"/>
@@ -114,7 +64,6 @@
 								</panel>
 								<panel title="装着ボーン" name="attach_panel"  width="500">
 									<scroll_list name="attach_scroll" width="500">
-										<scroll_list.columns label="" name="icon"/>
 										<scroll_list.columns label="装着ボーン名" name="joint" relative_width="0.25"/>
 										<scroll_list.columns label="回転Ｘ" name="x"/>
 										<scroll_list.columns label="回転Ｙ" name="y"/>
@@ -182,14 +131,12 @@
 		<!--
 		<layout_panel name="animator_layout">
 			<panel name="animator_panel">
-				<button label="" tool_tip="アニメーションキューの現在選択されているエントリの下に、現在選択されているポーズを追加します。" name="add_entry"/>
-				<button label="" tool_tip="アニメーションキューの現在選択されているエントリの下に、設定可能な待機イベントを追加します。" name="add_wait"/>
-				<button label="" tool_tip="アニメーションキューの現在選択されているエントリの下に、繰り返しイベントを追加します。" name="add_repeat"/>
-				<button label="" tool_tip="アニメーションキューから現在選択されているエントリを削除します。" name="delete_entry"/>
-				<button label="" tool_tip="現在選択されているエントリーをキューの１行上に移動します。" name="move_up"/>
-				<button label="" tool_tip="現在選択されているエントリーをキューの１行下に移動します。" name="move_down"/>
-				<icon name="vicon"/>
-				<panel name="title"/>
+				<button  tool_tip="アニメーションキューの現在選択されているエントリの下に、現在選択されているポーズを追加します。" name="add_entry"/>
+				<button  tool_tip="アニメーションキューの現在選択されているエントリの下に、設定可能な待機イベントを追加します。" name="add_wait"/>
+				<button  tool_tip="アニメーションキューの現在選択されているエントリの下に、繰り返しイベントを追加します。" name="add_repeat"/>
+				<button  tool_tip="アニメーションキューから現在選択されているエントリを削除します。" name="delete_entry"/>
+				<button  tool_tip="現在選択されているエントリーをキューの１行上に移動します。" name="move_up"/>
+				<button  tool_tip="現在選択されているエントリーをキューの１行下に移動します。" name="move_down"/>
 				<text name="first_person_label">
 					アニメーションキュー：
 				</text>
@@ -200,19 +147,12 @@
 				</scroll_list>
 				<button label="再生" tool_tip="アニメーションキューの再生を開始します。" name="play_anim"/>
 				<button label="停止" tool_tip="アニメーションキューの再生を停止します。" name="stop_anim"/>
-				<icon/>
 				<line_editor label="待機時間" tool_tip="Change the time for the wait event." name="anim_time"/>
 			</panel>
 		</layout_panel>
 -->
 	</layout_stack>
 	<!--
-	<multi_slider name="key_slider"/>
-	<line_editor label="" name="time"/>
-	-->
-	<!--
-	<multi_slider name="time_slider"/>
-	<multi_slider name="key_slider"/>
 	<button label="＋" label_selected="キーを追加" name="add_key"/>
 	<button label="ー" label_selected="キーを削除" name="delete_key"/>
 	<line_editor label="待機時間" tool_tip="Change the time for the wait event." name="time"/>
