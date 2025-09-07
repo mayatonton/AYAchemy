@@ -13,7 +13,7 @@
 		マテリアルを選択：
 	</string>
 	<string name="material_batch_import_text">
-		‐一括アップロード‐
+		－一括アップロード－
 	</string>
 	<string name="material_override_title">
 		マテリアルの編集
@@ -30,7 +30,6 @@
 		<text name="total_upload_fee">
 			アップロード費用：L$ [FEE]
 		</text>
-		<view_border name="button_border"/>
 		<button label="キャンセル" name="cancel"/>
 	</panel>
 </floater>

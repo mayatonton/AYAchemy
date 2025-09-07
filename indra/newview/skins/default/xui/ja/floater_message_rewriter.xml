@@ -8,7 +8,5 @@
 	<text name="message_type_lable">
 		メッセージ種別：
 	</text>
-	<combo_box name="message_type"/>
-	<text_editor name="rule_editor"/>
 	<button name="save_rules" label="ルールを保存"/>
 </floater>

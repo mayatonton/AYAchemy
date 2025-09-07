@@ -110,7 +110,7 @@
 		<tag>fail</tag>
 	</notification>
 	<notification name="WearableSave">
-		現在の服装／身体部位の変更を保存しますか？
+		現在の着用物／身体部位の変更を保存しますか？
 		<usetemplate canceltext="キャンセル" name="yesnocancelbuttons" notext="保存しない" yestext="保存"/>
 	</notification>
 	<notification name="ConfirmNoCopyToOutbox">
@@ -226,7 +226,7 @@
 		<usetemplate name="okbutton" yestext="ＯＫ"/>
 	</notification>
 	<notification name="AlertMerchantListingCannotWear">
-		マーケットプレイスの出品リストフォルダにある衣服装やボディパーツを着用できません。
+		マーケットプレイスの出品リストフォルダにある着用物や身体部位は着用できません。
 		<tag>fail</tag>
 	</notification>
 	<notification name="AlertMerchantListingInvalidID">
@@ -267,7 +267,7 @@
 		<tag>fail</tag>
 	</notification>
 	<notification name="SaveClothingBodyChanges">
-		服装、身体部位に対する変更をすべて保存しますか？
+		衣装、身体部位に対する変更をすべて保存しますか？
 		<tag>confirm</tag>
 		<usetemplate canceltext="キャンセル" name="yesnocancelbuttons" notext="保存しない" yestext="すべて保存"/>
 	</notification>
@@ -631,11 +631,11 @@ L$が不足しているので、このグループに参加することができ
 	</notification>
 	<notification name="CouldNotPutOnOutfit">
 		アウトフィットを装着できません。
-アウトフィットフォルダに服装、身体部位、装着物がありません。
+アウトフィットフォルダに衣装、身体部位、装着物がありません。
 		<tag>fail</tag>
 	</notification>
 	<notification name="CannotWearTrash">
-		ごみ箱にある服装や身体部位は、着用できません。
+		ごみ箱にある衣装や身体部位は、着用できません。
 		<tag>fail</tag>
 	</notification>
 	<notification name="MaxAttachmentsOnOutfit">
@@ -849,7 +849,7 @@ L$が不足しているので、このグループに参加することができ
 		ファイルをダウンロードできません。
 		<tag>fail</tag>
 	</notification>
-	<notification label="" name="MediaFileDownloadUnsupported">
+	<notification  name="MediaFileDownloadUnsupported">
 		ダウンロードをリクエストしたファイルは、[APP_NAME]ではサポートされていません。
 		<unique/>
 		<tag>confirm</tag>
@@ -1527,7 +1527,7 @@ L$が不足しているので、このグループに参加することができ
 		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="コピー"/>
 	</notification>
 	<notification name="ResolutionSwitchFail">
-		解像度を[RESX]×[RESY]に変更することができませんでした。
+		解像度を[RESX]✕[RESY]に変更することができませんでした。
 		<tag>fail</tag>
 	</notification>
 	<notification name="ErrorUndefinedGrasses">
@@ -1539,7 +1539,7 @@ L$が不足しているので、このグループに参加することができ
 		<tag>fail</tag>
 	</notification>
 	<notification name="CannotSaveWearableOutOfSpace">
-		「[NAME]」を服装のファイルに保存できません。
+		「[NAME]」を衣装のファイルに保存できません。
 コンピューターのディスクスペースを少し増やしてから、もう一度保存してみてください。
 		<tag>fail</tag>
 	</notification>
@@ -1833,7 +1833,7 @@ https://wiki.secondlife.com/wiki/Adding_Spelling_Dictionaries
 「[THIS_GPU]」まで
 	</notification>
 	<notification name="DisplaySetToRecommendedFeatureChange">
-		レンダリングサブシステムの変更により、画面設定は推奨レベルに設定されました。
+		描画サブシステムの変更により、画面設定は推奨レベルに設定されました。
 	</notification>
 	<notification name="ErrorMessage">
 [ERROR_MESSAGE]
@@ -1861,10 +1861,10 @@ https://wiki.secondlife.com/wiki/Adding_Spelling_Dictionaries
 		<tag>fail</tag>
 	</notification>
 	<notification name="ClothingLoading">
-		現在服装をダウンロードしています。
+		現在衣装をダウンロードしています。
 このまま[CURRENT_GRID]を通常通りご使用いただけます。他者からはあなたは正常に表示されています。
 		<form name="form">
-			<ignore name="ignore" text="服装がダウンロードされるまで時間がかかっているとき"/>
+			<ignore name="ignore" text="衣装がダウンロードされるまで時間がかかっているとき"/>
 		</form>
 	</notification>
 	<notification name="AgentComplexityWithVisibility">
@@ -2036,9 +2036,9 @@ https://wiki.secondlife.com/wiki/Adding_Spelling_Dictionaries
 	</notification>
 	<notification name="InvalidTerrainSize">
 		リージョンの地形テクスチャを設定できませんでした：
-地形テクスチャ「[TEXTURE_NUM]」は、[TEXTURE_SIZE_X]×[TEXTURE_SIZE_Y]では大きすぎます。
+地形テクスチャ「[TEXTURE_NUM]」は、[TEXTURE_SIZE_X]✕[TEXTURE_SIZE_Y]では大きすぎます。
 
-テクスチャは、２４ビットの[MAX_SIZE]×[MAX_SIZE]以下の画像を選択し、「適用」ボタンを再度クリックしてください。
+テクスチャは、２４ビットの[MAX_SIZE]✕[MAX_SIZE]以下の画像を選択し、「適用」ボタンを再度クリックしてください。
 	</notification>
 	<notification name="RawUploadStarted">
 		アップロードを開始しました。接続速度によっては、最大２分程度かかります。
@@ -2100,7 +2100,7 @@ https://wiki.secondlife.com/wiki/Adding_Spelling_Dictionaries
 		[AGENT]が、[ESTATE]の[LIST_TYPE]リストから削除されました。
 	</notification>
 	<notification name="CanNotChangeAppearanceUntilLoaded">
-		服装およびシェイプが読み込まれるまでは、容姿の変更はできません。
+		衣装およびシェイプが読み込まれるまでは、容姿の変更はできません。
 	</notification>
 	<notification name="ClassifiedMustBeAlphanumeric">
 		クラシファイド広告の名前は、英数字から始めてください。句読点から始めることはできません。
@@ -2125,7 +2125,7 @@ https://www.alchemyviewer.org/downloads.html
 		ログインするには、バージョン[VERSION]が必要です。
 リリースノート：[URL]
 
-OKをクリックして、ダウンロードとインストールを開始します。
+ＯＫをクリックして、ダウンロードとインストールを開始します。
 		<tag>confirm</tag>
 		<usetemplate name="okbutton" yestext="ＯＫ"/>
 	</notification>
@@ -2163,8 +2163,7 @@ OKをクリックして、ダウンロードとインストールを開始しま
 		<tag>confirm</tag>
 		<usetemplate ignoretext="ブラウザを起動して、Webページを閲覧するとき" name="okcancelignore" notext="キャンセル" yestext="ＯＫ"/>
 	</notification>
-	<notification name="WebLaunchJoinNow">
-		[https://secondlife.com/my/account/?lang=ja-JP マイアカウント]ページに移動してアカウントを管理しますか？
+	<notification name="WebLaunchJoinNow"> [https://secondlife.com/my/account/?lang=ja-JP マイアカウント]ページに移動してアカウントを管理しますか？
 		<tag>confirm</tag>
 		<usetemplate ignoretext="ブラウザを起動して、アカウントを管理するとき" name="okcancelignore" notext="キャンセル" yestext="ＯＫ"/>
 	</notification>
@@ -2282,14 +2281,12 @@ OKをクリックして、ダウンロードとインストールを開始しま
 		<tag>fail</tag>
 		<usetemplate name="okbutton" yestext="ＯＫ"/>
 	</notification>
-	<notification name="GroupLimitInfo">
-		ベーシック会員の住民は、最大[MAX_BASIC]個のグループまで参加することができます。プレミアム会員は最大[MAX_PREMIUM]個まで参加可能です。[https://accounts.secondlife.com/change_membership/?lang=ja-JP 詳細またはアップグレード]
+	<notification name="GroupLimitInfo"> ベーシック会員の住民は、最大[MAX_BASIC]個のグループまで参加することができます。プレミアム会員は最大[MAX_PREMIUM]個まで参加可能です。[https://accounts.secondlife.com/change_membership/?lang=ja-JP 詳細またはアップグレード]
 		<tag>group</tag>
 		<tag>fail</tag>
 		<usetemplate name="okbutton" yestext="閉じる"/>
 	</notification>
-	<notification name="GroupLimitInfoPlus">
-		ベーシック会員の住人は、最大[MAX_BASIC]個までグループに参加できます。プレミアム会員は最大[MAX_PREMIUM]個まで参加可能です。プレミアム・プラス会員は最大[MAX_PREMIUM_PLUS]個です。[https://accounts.secondlife.com/change_membership/?lang=ja-JP 詳細またはアップグレード]
+	<notification name="GroupLimitInfoPlus"> ベーシック会員の住人は、最大[MAX_BASIC]個までグループに参加できます。プレミアム会員は最大[MAX_PREMIUM]個まで参加可能です。プレミアム・プラス会員は最大[MAX_PREMIUM_PLUS]個です。[https://accounts.secondlife.com/change_membership/?lang=ja-JP 詳細またはアップグレード]
 		<tag>group</tag>
 		<tag>fail</tag>
 		<usetemplate name="okbutton" yestext="閉じる"/>
@@ -2961,8 +2958,7 @@ https://community.secondlife.com/knowledgebase/%E6%97%A5%E6%9C%AC%E8%AA%9E%E3%83
 		このオブジェクトには、あなたがコピーできるアイテムはありません。
 		<tag>fail</tag>
 	</notification>
-	<notification name="WebLaunchAccountHistory">
-		[https://secondlife.com/my/account/?lang=ja-JP マイアカウント]
+	<notification name="WebLaunchAccountHistory"> [https://secondlife.com/my/account/?lang=ja-JP マイアカウント]
 ページに移動してアカウント履歴を確認しますか？
 		<tag>confirm</tag>
 		<usetemplate ignoretext="ブラウザを起動してアカウント履歴を見るとき" name="okcancelignore" notext="キャンセル" yestext="ページに移動"/>
@@ -3258,8 +3254,8 @@ Webページにリンクすると、他人がこの場所に簡単にアクセ�
 		<usetemplate name="okbutton" yestext="ＯＫ"/>
 	</notification>
 	<notification name="AutoWearNewClothing">
-		作成する服装を自動的に装着しますか？
-		<usetemplate ignoretext="「容姿」を編集中に、作成する服装を装着するとき" name="okcancelignore" notext="いいえ" yestext="はい"/>
+		作成する衣装を自動的に装着しますか？
+		<usetemplate ignoretext="「容姿」を編集中に、作成する衣装を装着するとき" name="okcancelignore" notext="いいえ" yestext="はい"/>
 	</notification>
 	<notification name="NotAgeVerified">
 		訪問しようとしている場所は、１８歳以上の住人に制限されています。
@@ -3297,7 +3293,7 @@ Webページにリンクすると、他人がこの場所に簡単にアクセ�
 		添付が取り消されました。
 	</notification>
 	<notification name="ReplacedMissingWearable">
-		欠落している服装や身体部位をデフォルトに置き換えます。
+		欠落している着用物や身体部位をデフォルトに置き換えます。
 	</notification>
 	<notification name="GroupNotice">件名：[SUBJECT]　メッセージ：[MESSAGE]
 		<tag>group</tag>
@@ -3309,7 +3305,7 @@ Webページにリンクすると、他人がこの場所に簡単にアクセ�
 		残念ながら自分自身をフレンド登録することはできません。
 	</notification>
 	<notification name="AddSelfRenderExceptions">
-		あなた自身をレンダリングの例外リストに加えることはできません。
+		あなた自身を描画の例外リストに加えることはできません。
 	</notification>
 	<notification name="UploadingAuctionSnapshot">
 		インワールドとWebサイトのスナップショットをアップロードしています…
@@ -3756,7 +3752,7 @@ Webページにリンクすると、他人がこの場所に簡単にアクセ�
 		[NAME_SLURL] は、テレポートであなたを呼んでいます。
 [MESSAGE]
 
-&lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt;‐[MATURITY_STR]
+&lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt;－[MATURITY_STR]
 		<tag>confirm</tag>
 		<form name="form">
 			<button name="Teleport" text="テレポート"/>
@@ -3767,7 +3763,7 @@ Webページにリンクすると、他人がこの場所に簡単にアクセ�
 		[NAME_SLURL] は、テレポートであなたを呼んでいます。
 [MESSAGE]
 
-&lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt;‐[MATURITY_STR]
+&lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt;－[MATURITY_STR]
 
 このリージョンには[REGION_CONTENT_MATURITY]コンテンツが含まれていますが、現在の初期設定は[REGION_CONTENT_MATURITY]コンテンツを除外するように設定されています。初期設定を変更してテレポートを続けるか、このテレポートを取り消すことができます。
 		<tag>confirm</tag>
@@ -3780,7 +3776,7 @@ Webページにリンクすると、他人がこの場所に簡単にアクセ�
 		[NAME_SLURL] は、テレポートであなたを呼んでいます。
 [MESSAGE]
 
-&lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt;‐[MATURITY_STR]
+&lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt;－[MATURITY_STR]
 
 ただし、このリージョンには成人のみアクセスできるコンテンツが含まれています。
 		<tag>fail</tag>
@@ -4549,14 +4545,14 @@ UDP：3478, 3479, 5060, 5062, 6250, 12000-32000
 		<unique/>
 	</notification>
 	<notification label="サイドパネル" name="HintSidePanel">
-		サイドパネルから、インベントリや服装、プロフィールなどに素早くアクセスできます。
+		サイドパネルから、インベントリや衣装、プロフィールなどに素早くアクセスできます。
 		<unique/>
 	</notification>
 	<notification label="移動" name="HintMove">
 		歩行や走行は、「移動」パネルを開き、矢印コントロールによって操作します。この操作はキーボードの矢印キーで実行することも可能です。
 		<unique/>
 	</notification>
-	<notification label="" name="HintMoveClick">
+	<notification  name="HintMoveClick">
 		１，クリックで移動
 地表をクリックすると、その場所まで歩きます。
 
@@ -4658,84 +4654,84 @@ UDP：3478, 3479, 5060, 5062, 6250, 12000-32000
 			<button name="cancel" text="キャンセル"/>
 		</form>
 	</notification>
-	<notification label="" name="NoClassifieds">
+	<notification  name="NoClassifieds">
 		クラシファイド広告の作成と編集は、高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoGroupInfo">
+	<notification  name="NoGroupInfo">
 		グループの作成と編集は高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoPlaceInfo">
+	<notification  name="NoPlaceInfo">
 		場所のプロフィールの表示は高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoPicks">
+	<notification  name="NoPicks">
 		ピックの作成と編集は高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoWorldMap">
+	<notification  name="NoWorldMap">
 		ワールドマップの表示は高度な操作モードでのみ利用できます。終了してモードを変更しますか？モードはログイン画面で選択できます。
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoVoiceCall">
+	<notification  name="NoVoiceCall">
 		ボイスコールは高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoAvatarShare">
+	<notification  name="NoAvatarShare">
 		共有は高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoAvatarPay">他
+	<notification  name="NoAvatarPay">他
 		の住人への支払いは高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoInventory">
+	<notification  name="NoInventory">
 		インベントリの表示は高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoAppearance">
+	<notification  name="NoAppearance">
 		容姿エディタは高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="NoSearch">
+	<notification  name="NoSearch">
 		検索は高度な操作モードでのみ利用できます。ログアウトしてモードを変更しますか？
 		<unique/>
 		<tag>fail</tag>
 		<tag>confirm</tag>
 		<usetemplate name="okcancelbuttons" notext="終了しない" yestext="終了"/>
 	</notification>
-	<notification label="" name="ConfirmHideUI">
+	<notification  name="ConfirmHideUI">
 		この操作により、全てのメニュー項目とボタンが非表示になります。再び表示するには、[SHORTCUT]をもう一度クリックしてください。
 		<unique/>
 		<tag>confirm</tag>
@@ -4819,10 +4815,10 @@ Intelドライバーのウェブサイトを確認しますか？
 		510
 	</global>
 	<global name="UnsupportedGPU">
-		‐あなたのグラフィックカードは、必須動作環境の条件を満たしていません。
+		－あなたのグラフィックカードは、必須動作環境の条件を満たしていません。
 	</global>
 	<global name="UnsupportedRAM">
-		‐あなたのシステムメモリは、必須動作環境の条件を満たしていません。
+		－あなたのシステムメモリは、必須動作環境の条件を満たしていません。
 	</global>
 	<global name="LLLeapUpdaterFailure">
 		アップデーターサービス[UPDATER_APP]の起動に失敗しました。ビューアが正しくインストールされ、実行に必要な権限があることを確認してください。引き続き問題が発生する場合は、[SUPPORT_SITE]をご覧ください。
@@ -5227,39 +5223,39 @@ Intelドライバーのウェブサイトを確認しますか？
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedOwnersDiffer">
-		リンクエラー‐所有者が違います。
+		リンクエラー－所有者が違います。
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedNoModNavmeshAcrossRegions">
-		リンクエラー‐リージョンの境界をまたぐナビメッシュは変更できません。
+		リンクエラー－リージョンの境界をまたぐナビメッシュは変更できません。
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedNoPermToEdit">
-		リンクエラー‐編集権限がありません。
+		リンクエラー－編集権限がありません。
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedTooManyPrims">
-		リンクエラー‐プリミティブが多すぎます。
+		リンクエラー－プリミティブが多すぎます。
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedCantLinkNoCopyNoTrans">
-		リンクエラー‐コピー不可と譲渡不可のオブジェクトをリンクできません。
+		リンクエラー－コピー不可と譲渡不可のオブジェクトをリンクできません。
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedNothingLinkable">
-		リンクエラー‐リンクできるものがありません。
+		リンクエラー－リンクできるものがありません。
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedTooManyPathfindingChars">
-		リンクエラー‐経路探索の文字数が多すぎます。
+		リンクエラー－経路探索の文字数が多すぎます。
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedInsufficientLand">
-		リンクエラー‐土地のリソースが足りません。
+		リンクエラー－土地のリソースが足りません。
 		<tag>fail</tag>
 	</notification>
 	<notification name="LinkFailedTooMuchPhysics">
-		オブジェクトが使用する物理リソースが多すぎます‐そのダイナミクスが無効になっています。
+		オブジェクトが使用する物理リソースが多すぎます－そのダイナミクスが無効になっています。
 		<tag>fail</tag>
 	</notification>
 	<notification name="EstateManagerFailedllTeleportHome">
@@ -6219,7 +6215,7 @@ Intelドライバーのウェブサイトを確認しますか？
 	<notification name="AlwaysRunDisabled">
 		常時走行が無効になりました。
 	</notification>
-	<notification name="CinematicConfirmHideUI" label="">
+	<notification name="CinematicConfirmHideUI" >
 		シネマティックモードでは、ほとんどのＵＩ、ホバー テキスト、音声ドット、ＨＵＤが非表示になります。
 元に戻すには、[SHORTCUT]を押します。
 		<unique/>

@@ -11,8 +11,7 @@
 	</text>
 	<check_box label="カスタムポート" name="connection_port_enabled"/>
 	<spinner label="ポート番号：" name="connection_port"/>
-	<text name="Web:">Web：
-	</text>
+	<text name="Web:">Web：</text>
 	<radio_group name="preferred_browser_behavior">
 		<radio_item label="すべてのリンクにデフォルトシステムのブラウザを使用します" name="internal" tool_tip="デフォルトのシステム Webブラウザでヘルプや Web リンク先などを見ます。全画面で起動中にはおすすめしません。" value="0"/>
 		<radio_item label="Second Lifeリンクにのみ内蔵ブラウザを使用します" name="external" tool_tip="ヘルプ、Webリンクなどにはデフォルトシステムのブラウザを使用します内蔵ブラウザは LindenLab／Second Lifeリンクにのみ使用されます。" value="1"/>
