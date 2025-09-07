@@ -1394,6 +1394,8 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
     // compact mode: show a timestamp and name
     if (use_plain_text_chat_history)
     {
+        // Track whether we appended a trailing space after the timestamp.
+        bool timestamp_added_trailing_space = false;
         square_brackets = chat.mSourceType == CHAT_SOURCE_SYSTEM && !use_irssi_text_chat_history;
 
         name_params.color(fancy_chat_divider_color);
@@ -1409,7 +1411,9 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
                 timestamp_style.color(timestamp_color);
                 timestamp_style.readonly_color(timestamp_color);
             }
-            mEditor->appendText("[" + chat.mTimeStr + "] ", prependNewLineState, timestamp_style);
+
+            // No trailing space; the inline icon comes immediately after the timestamp.
+            mEditor->appendText("[" + chat.mTimeStr + "]", prependNewLineState, timestamp_style);
             prependNewLineState = false;
         }
 
@@ -1420,10 +1424,66 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
             prependNewLineState = false;
         }
 
+
         // names showing
         if (args["show_names_for_p2p_conv"].asBoolean() && utf8str_trim(chat.mFromName).size())
         {
-            // Don't hotlink any messages from the system (e.g. "Second Life:"), so just add those in plain text.
+            // Insert an inline avatar icon in plain/compact chat. Size follows the current font's line height.
+            if (chat.mSourceType == CHAT_SOURCE_AGENT && chat.mFromID.notNull())
+            {
+                // Derive icon size from the chat font line height, keep it within a sane range.
+                F32 line_h_f = fontp ? fontp->getLineHeight() : 18.f;
+                S32 icon_px = llclamp((S32)llround(line_h_f - 2.f), 14, 28); // small padding to avoid touching ascenders/descenders
+
+                LLAvatarIconCtrl::Params ip;
+                ip.name = "inline_speaker_icon";
+                ip.rect = LLRect(0, icon_px, icon_px, 0); // width x height = icon_px
+
+                // Create the control via the UI factory (constructor is protected)
+                LLAvatarIconCtrl* icon = LLUICtrlFactory::create<LLAvatarIconCtrl>(ip);
+                if (icon)
+                {
+                    // Bind the icon to the speaker's avatar ID
+                    icon->setValue(LLSD(chat.mFromID)); // or icon->setAvatarId(chat.mFromID);
+                    // Ensure the view has a non-zero width so the inline segment reserves space
+                    icon->reshape(icon_px, icon_px);
+
+                    // Build padding text whose visual width ~= icon width (no extra gap),
+                    // so the icon fully covers these spaces -> no visible gap before the icon.
+                    const F32 space_w = (fontp ? llmax(1.f, fontp->getWidthF32(std::string(" "))) : 4.f);
+                    S32 nspaces = (space_w > 0.f) ? (S32)llceil((F32)icon_px / space_w) : 1;
+                    nspaces = llclamp(nspaces, 1, 32);
+                    std::string pad(nspaces, ' ');
+                    if (fontp)
+                    {
+                        // Fine-tune so pad width <= icon width (no left-side visible gap)
+                        F32 pad_px = fontp->getWidthF32(pad);
+                        while ((nspaces > 1) && (pad_px > (F32)icon_px))
+                        {
+                            --nspaces; pad.assign(nspaces, ' ');
+                            pad_px = fontp->getWidthF32(pad);
+                        }
+                        while ((nspaces < 32) && (pad_px < (F32)icon_px - 1.f))
+                        {
+                            ++nspaces; pad.assign(nspaces, ' ');
+                            pad_px = fontp->getWidthF32(pad);
+                        }
+                    }
+
+                    // Append the icon inline once. Associated text 'pad' is to the RIGHT of the icon,
+                    // pushing the name so it doesn't overlap the icon.
+                    LLInlineViewSegment::Params segp;
+                    segp.view = icon;
+                    segp.left_pad = 0;
+                    segp.right_pad = 0;
+                    segp.force_newline = false;
+                    // Associated text 'pad' advances caret; icon sits immediately after the timestamp.
+                    mEditor->appendWidget(segp, pad, /*allow_undo*/ false);
+                    prependNewLineState = false;
+                }
+            }
+
+// Don't hotlink any messages from the system (e.g. "Second Life:"), so just add those in plain text.
             if (chat.mSourceType == CHAT_SOURCE_OBJECT && chat.mFromID.notNull())
             {
 // [RLVa:KB] - Checked: 2010-04-22 (RLVa-1.2.0f) | Added: RLVa-1.2.0f
@@ -1596,6 +1656,30 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
             {
                 LL_WARNS() << "Failed to create header from " << mMessageHeaderFilename << ": can't append to history" << LL_ENDL;
                 return;
+            }
+            // Optional: resize the header's avatar icon to match the current chat font line height.
+            if (LLPanel* header_panel = dynamic_cast<LLPanel*>(view))
+            {
+                if (LLAvatarIconCtrl* iconw = header_panel->findChild<LLAvatarIconCtrl>("avatar_icon"))
+                {
+                    F32 line_h_f = fontp ? fontp->getLineHeight() : 18.f;
+                    S32 icon_px = llclamp((S32)llround(line_h_f - 2.f), 14, 28);
+                    iconw->reshape(icon_px, icon_px);
+
+                    // Optionally shift the message text to the right so it doesn't overlap when the icon grows.
+                    if (LLView* msg = header_panel->findChild<LLView>("msg_text"))
+                    {
+                        LLRect r = msg->getRect();
+                        S32 desired_left = icon_px + 12; // icon width + padding
+                        if (r.mLeft != desired_left)
+                        {
+                            S32 dx = desired_left - r.mLeft;
+                            r.mLeft = desired_left;
+                            r.mRight -= dx; // keep width
+                            msg->setRect(r);
+                        }
+                    }
+                }
             }
 
             p.top_pad = mEditor->getLength() ? mTopHeaderPad : 0;
