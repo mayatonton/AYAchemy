@@ -1097,14 +1097,22 @@ private:
         mAvatarNameCacheConnection.disconnect();
 
         mFrom = av_name.getDisplayName();
-
+        const bool show_account_with_display = gSavedSettings.getBOOL("AlchemyChatShowAccountName");
+        std::string legacy = av_name.getLegacyName();
+        std::string display = av_name.getDisplayName();
+        std::string visible = display;
+        if (show_account_with_display && !legacy.empty() && legacy != display)
+        {
+            visible = display + " (" + legacy + ")";
+        }
         LLTextBox* user_name = getChild<LLTextBox>("user_name");
-        user_name->setValue( LLSD(av_name.getDisplayName() ) );
-        user_name->setToolTip( av_name.getUserName() );
+        user_name->setValue(LLSD(visible));
+        user_name->setToolTip(av_name.getUserName());
 
         if (gSavedSettings.getBOOL("NameTagShowUsernames") &&
             av_name.useDisplayNames() &&
-            !av_name.isDisplayNameDefault())
+            !av_name.isDisplayNameDefault() &&
+            !show_account_with_display) // avoid duplicating info when we already show (legacy)
         {
             LLStyle::Params style_params_name;
             LLColor4 userNameColor = LLUIColorTable::instance().getColor("EmphasisColor");
@@ -1394,6 +1402,36 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
     static LLCachedControl<std::string> alchemyFancyChatDivider(gSavedSettings, "AlchemyFancyChatDivider", " | ");
     static LLUIColor fancy_chat_divider_color = LLUIColorTable::instance().getColor("AlchemyFancyChatDividerColor");
 
+    // Preference: show account name next to display name in chat
+    const bool show_account_with_display = gSavedSettings.getBOOL("AlchemyChatShowAccountName");
+
+    // Helper: build speaker string based on preference and available avatar name data
+    auto format_speaker = [&](const LLUUID& id, const std::string& fallback_display) -> std::string
+    {
+        std::string display = utf8str_trim(fallback_display);
+        LLAvatarName av;
+        std::string user, legacy;
+        if (!id.isNull() && LLAvatarNameCache::get(id, &av))
+        {
+            if (!av.isDisplayNameDefault() && !av.getDisplayName().empty())
+                display = av.getDisplayName();
+            user = av.getUserName();
+            legacy = av.getLegacyName();
+        }
+        // If we have a display name:
+        if (!display.empty())
+        {
+            // Append legacy name only when enabled
+            if (show_account_with_display && !legacy.empty() && legacy != display)
+                return display + " (" + legacy + ")";
+            return display; // display only
+        }
+        // No display name: prefer legacy, then user
+        if (!legacy.empty()) return legacy;
+        if (!user.empty())   return user;
+        return fallback_display; // last resort
+    };
+
     // Helper: build a string of spaces whose visual width approximates 'px'
     auto spaces_by_px = [&](F32 px) -> std::string
     {
@@ -1510,7 +1548,8 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
                     }
                     else
                     {
-                        LLWString from_text = utf8string_to_wstring(chat.mFromName);
+                        std::string speaker = format_speaker(chat.mFromID, chat.mFromName);
+                        LLWString from_text = utf8string_to_wstring(speaker);
                         S32 i = from_text.length();
                         if (i > name_column) from_text.erase(name_column);
                         else if (i < name_column) from_text = LLWString(name_column - i, ' ') + from_text;
@@ -1521,6 +1560,7 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
                 }
                 else
                 {
+                    // Objects: do not format with avatar names
                     mEditor->appendText(chat.mFromName + delimiter, prependNewLineState, link_params);
                     prependNewLineState = false;
                 }
@@ -1547,19 +1587,7 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
                     }
                     else
                     {
-                        // Prefer displayName; if unavailable, use userName; finally legacyName.
-                        std::string speaker = chat.mFromName;
-                        LLAvatarName av_name;
-                        if (LLAvatarNameCache::get(chat.mFromID, &av_name))
-                        {
-                            if (!av_name.isDisplayNameDefault() && !av_name.getDisplayName().empty())
-                                speaker = av_name.getDisplayName();
-                            else if (!av_name.getUserName().empty())
-                                speaker = av_name.getUserName();
-                            else if (!av_name.getLegacyName().empty())
-                                speaker = av_name.getLegacyName();
-                        }
-                        speaker = utf8str_trim(speaker);
+                        std::string speaker = format_speaker(chat.mFromID, chat.mFromName);
                         LLWString from_text = utf8string_to_wstring(speaker);
                         std::string text_padding;
                         S32 i = from_text.length();
@@ -1572,19 +1600,7 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
                 }
                 else
                 {
-                    // Display name only if available; otherwise show account (user) name; never "Display (account)".
-                    std::string speaker = chat.mFromName;
-                    LLAvatarName av_name;
-                    if (LLAvatarNameCache::get(chat.mFromID, &av_name))
-                    {
-                        if (!av_name.isDisplayNameDefault() && !av_name.getDisplayName().empty())
-                            speaker = av_name.getDisplayName();
-                        else if (!av_name.getUserName().empty())
-                            speaker = av_name.getUserName();
-                        else if (!av_name.getLegacyName().empty())
-                            speaker = av_name.getLegacyName();
-                    }
-                    speaker = utf8str_trim(speaker);
+                    std::string speaker = format_speaker(chat.mFromID, chat.mFromName);
                     mEditor->appendText(speaker + delimiter, prependNewLineState, link_params);
                     prependNewLineState = false;
                 }
@@ -1635,25 +1651,7 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
         {
             // Insert the inline icon first (with proper spacing)
             append_inline_icon();
-
-            std::string speaker;
-            LLAvatarName av_name;
-            if (LLAvatarNameCache::get(chat.mFromID, &av_name))
-            {
-                // Prefer the unique account/user name (e.g. "first.last" or "username")
-                speaker = av_name.getUserName();
-                if (speaker.empty())
-                {
-                    // Fallbacks if user name isn't available yet
-                    speaker = av_name.getLegacyName(); // "First Last" style, no parentheses
-                }
-            }
-            if (speaker.empty())
-            {
-                // As a last resort, use whatever is available (without parentheses)
-                speaker = chat.mFromName;
-            }
-
+            std::string speaker = format_speaker(chat.mFromID, chat.mFromName);
             // Keep it clickable to the avatar inspector
             LLStyle::Params link_params(body_message_params);
             link_params.overwriteFrom(LLStyleMap::instance().lookupAgent(chat.mFromID));
@@ -1741,8 +1739,9 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 
         std::string widget_associated_text = "\n[" + chat.mTimeStr + "] ";
         if (utf8str_trim(chat.mFromName).size() != 0 && chat.mFromName != SYSTEM_FROM)
-            widget_associated_text += chat.mFromName + delimiter;
-
+        {
+            widget_associated_text += format_speaker(chat.mFromID, chat.mFromName) + delimiter;
+        }
         mEditor->appendWidget(p, widget_associated_text, false);
 
         mLastFromName = chat.mFromName;
@@ -1819,24 +1818,7 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 
         if (irc_me && !use_plain_text_chat_history)
         {
-            // Prefer Display Name (when not default); otherwise prefer userName; fall back to legacyName.
-            std::string from_name = chat.mFromName;
-            LLAvatarName av_name;
-            if (!chat.mFromID.isNull() && LLAvatarNameCache::get(chat.mFromID, &av_name))
-            {
-                if (!av_name.isDisplayNameDefault() && !av_name.getDisplayName().empty())
-                {
-                    from_name = av_name.getDisplayName();
-                }
-                else if (!av_name.getUserName().empty())
-                {
-                    from_name = av_name.getUserName(); // do not show legacy if userName exists
-                }
-                else if (!av_name.getLegacyName().empty())
-                {
-                    from_name = av_name.getLegacyName();
-                }
-            }
+            std::string from_name = format_speaker(chat.mFromID, chat.mFromName);
             mEditor->appendText(from_name, prependNewLineState, body_message_params);
         }
 
