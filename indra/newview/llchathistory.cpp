@@ -1547,7 +1547,20 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
                     }
                     else
                     {
-                        LLWString from_text = utf8string_to_wstring(chat.mFromName);
+                        // Prefer displayName; if unavailable, use userName; finally legacyName.
+                        std::string speaker = chat.mFromName;
+                        LLAvatarName av_name;
+                        if (LLAvatarNameCache::get(chat.mFromID, &av_name))
+                        {
+                            if (!av_name.isDisplayNameDefault() && !av_name.getDisplayName().empty())
+                                speaker = av_name.getDisplayName();
+                            else if (!av_name.getUserName().empty())
+                                speaker = av_name.getUserName();
+                            else if (!av_name.getLegacyName().empty())
+                                speaker = av_name.getLegacyName();
+                        }
+                        speaker = utf8str_trim(speaker);
+                        LLWString from_text = utf8string_to_wstring(speaker);
                         std::string text_padding;
                         S32 i = from_text.length();
                         if (i >= name_column) from_text = from_text.substr(0, name_column);
@@ -1559,8 +1572,19 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
                 }
                 else
                 {
-                    // Display name only (no "(account name)")
-                    std::string speaker = utf8str_trim(chat.mFromName);
+                    // Display name only if available; otherwise show account (user) name; never "Display (account)".
+                    std::string speaker = chat.mFromName;
+                    LLAvatarName av_name;
+                    if (LLAvatarNameCache::get(chat.mFromID, &av_name))
+                    {
+                        if (!av_name.isDisplayNameDefault() && !av_name.getDisplayName().empty())
+                            speaker = av_name.getDisplayName();
+                        else if (!av_name.getUserName().empty())
+                            speaker = av_name.getUserName();
+                        else if (!av_name.getLegacyName().empty())
+                            speaker = av_name.getLegacyName();
+                    }
+                    speaker = utf8str_trim(speaker);
                     mEditor->appendText(speaker + delimiter, prependNewLineState, link_params);
                     prependNewLineState = false;
                 }
@@ -1795,13 +1819,23 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 
         if (irc_me && !use_plain_text_chat_history)
         {
+            // Prefer Display Name (when not default); otherwise prefer userName; fall back to legacyName.
             std::string from_name = chat.mFromName;
             LLAvatarName av_name;
-            if (!chat.mFromID.isNull() &&
-                LLAvatarNameCache::get(chat.mFromID, &av_name) &&
-                !av_name.isDisplayNameDefault())
+            if (!chat.mFromID.isNull() && LLAvatarNameCache::get(chat.mFromID, &av_name))
             {
-                from_name = av_name.getCompleteName();
+                if (!av_name.isDisplayNameDefault() && !av_name.getDisplayName().empty())
+                {
+                    from_name = av_name.getDisplayName();
+                }
+                else if (!av_name.getUserName().empty())
+                {
+                    from_name = av_name.getUserName(); // do not show legacy if userName exists
+                }
+                else if (!av_name.getLegacyName().empty())
+                {
+                    from_name = av_name.getLegacyName();
+                }
             }
             mEditor->appendText(from_name, prependNewLineState, body_message_params);
         }
