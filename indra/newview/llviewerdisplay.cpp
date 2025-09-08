@@ -1793,8 +1793,8 @@ void app_side_fps_limit()
     static LLTimer s_log_timer;
     if (s_log_timer.getElapsedTimeF32() > 1.0f)
     {
-        const F32 max_f = gSavedSettings.getF32("MaxFPS");
-        const F32 bg_f  = gSavedSettings.getF32("BackgroundMaxFPS");
+        const S32 max_f = gSavedSettings.getS32("MaxFPS");
+        const S32 bg_f  = gSavedSettings.getS32("BackgroundMaxFPS");
         LL_INFOS("FPSLimit") << "LimitFPS=" << (int)gSavedSettings.getBOOL("LimitFPS")
                              << " VSync="   << (int)gSavedSettings.getBOOL("RenderVSyncEnable")
                              << " MaxF="    << max_f
