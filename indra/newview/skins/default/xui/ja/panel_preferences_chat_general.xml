@@ -1,141 +1,194 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<panel label="テキストチャット" name="chat">
-	<panel name="general_chat_settings">
-		<check_box label="近くのチャット入力でチャットバーを使用する" name="use_chat_bar"/>
-		<check_box label="ローカルチャットでジェスチャーを自動補完する" name="auto_complete_gestures"/>
-		<check_box label="チャット時にタイピングアニメーションを再生する" name="play_typing_animation"/>
-		<check_box label="オフライン時にＩＭが送られてきたときにメールを送る（[EMAIL]）" name="send_im_to_email"/>
-		<text name="email_settings">[https://accounts.secondlife.com/change_email?lang=ja-JP オフライン時のＩＭのメール送信先の設定]</text>
-		<text name="font_name" width="70" left="296">
-			フォント名：
-		</text>
-		<combo_box name="chat_font_name">
-			<item label="IBM Plex" name="IBMPlex"/>
-			<item label="Noto Sans" name="NotoSans"/>
-			<item label="Open Dyslexic" name="OpenDyslexic"/>
-			<item label="Sans Serif" name="SansSerif"/>
-			<item label="Source Sans" name="SourceSans"/>
-			<item label="Ubuntu" name="Ubuntu"/>
-			<item label="Cascadia Code" name="CascadiaCode"/>
-			<item label="Fira Code" name="FiraCode"/>
-			<item label="IBM Plex Mono" name="IBMPlexMono"/>
-			<item label="Jetbrains Mono" name="JetbrainsMono"/>
-			<item label="Monaspace Argon" name="MonaspaceArgon"/>
-			<item label="Monaspace Krypton" name="MonaspaceKrypton"/>
-			<item label="Monaspace Neon" name="MonaspaceNeon"/>
-			<item label="Monaspace Xenon" name="MonaspaceXenon"/>
-			<item label="Monospace" name="Monospace"/>
-			<item label="Noto Sans Mono" name="NotoSansMono"/>
-			<item label="Open Dyslexic Mono" name="OpenDyslexicMono"/>
-			<item label="源ノ角ゴシック" name="SourceCodePro"/>
-			<item label="Ubuntu Mono" name="UbuntuMono"/>
-		</combo_box>
-		<text name="font_size" width="70" left="296">
-			サイズ：
-		</text>
-		<combo_box name="chat_font_size">
-			<item label="等幅" name="Monospace"/>
-			<item label="小" name="Small"/>
-			<item label="中" name="Medium"/>
-			<item label="大" name="Large"/>
-			<item label="特大" name="Huge"/>
-		</combo_box>
-		<check_box label="吹き出しチャット" name="bubble_text_chat"/>
-	</panel>
-	<panel name="im_notification_settings">
-		<text name="friend_ims">
-			フレンドのＩＭ：
-		</text>
-		<combo_box control_name="NotificationFriendIMOptions" name="FriendIMOptions">
-			<item label="会話ウィンドウを開く" name="OpenConversationsWindow"/>
-			<item label="メッセージをポップアップ" name="PopUpMessage"/>
-			<item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton"/>
-			<item label="アクションなし" name="NoAction"/>
-		</combo_box>
-		<check_box label="サウンド再生" name="play_sound_friend_im">
-		</check_box>
-		<text name="non_friend_ims">
-			フレンドでない人からのＩＭ：
-		</text>
-		<combo_box name="NonFriendIMOptions">
-			<item label="会話ウィンドウを開く" name="OpenConversationsWindow"/>
-			<item label="メッセージをポップアップ" name="PopUpMessage"/>
-			<item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton"/>
-			<item label="アクションなし" name="NoAction"/>
-		</combo_box>
-		<check_box label="サウンド再生" name="play_sound_non_friend_im"/>
-		<text name="conference_ims">
-			会話ＩＭ：
-		</text>
-		<combo_box name="ConferenceIMOptions">
-			<item label="会話ウィンドウを開く" name="OpenConversationsWindow"/>
-			<item label="メッセージをポップアップ" name="PopUpMessage"/>
-			<item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton"/>
-			<item label="アクションなし" name="NoAction"/>
-		</combo_box>
-		<check_box label="サウンド再生" name="play_sound_conference_im"/>
-		<text name="group_chat">
-			グループチャット：
-		</text>
-		<combo_box name="GroupChatOptions">
-			<item label="会話ウィンドウを開く" name="OpenConversationsWindow"/>
-			<item label="メッセージをポップアップ" name="PopUpMessage"/>
-			<item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton"/>
-			<item label="アクションなし" name="NoAction"/>
-		</combo_box>
-		<check_box label="サウンド再生" name="play_sound_group_chat_im"/>
-		<text name="nearby_chat">
-			近くのチャット：
-		</text>
-		<combo_box name="NearbyChatOptions">
-			<item label="会話ウィンドウを開く" name="OpenConversationsWindow"/>
-			<item label="メッセージをポップアップ" name="PopUpMessage"/>
-			<item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton"/>
-			<item label="アクションなし" name="NoAction"/>
-		</combo_box>
-		<check_box label="サウンド再生" name="play_sound_nearby_chat_im">
-		</check_box>
-		<text name="object_ims">
-			オブジェクトからのＩＭ：
-		</text>
-		<combo_box name="ObjectIMOptions">
-			<item label="会話ウィンドウを開く" name="OpenConversationsWindow"/>
-			<item label="メッセージをポップアップ" name="PopUpMessage"/>
-			<item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton"/>
-			<item label="アクションなし" name="NoAction"/>
-		</combo_box>
-		<check_box label="サウンド再生" name="play_sound_object_im"/>
-		<text name="notifications_alert">
-			すべての通知を一時的に停止するには、「コミュニケーション」＞「取り込み中」を選択します。
-		</text>
-	</panel>
-	<panel name="play_sound_settings">
-		<text name="play_sound">
-			再生するサウンド：
-		</text>
-		<check_box label="新しい会話" name="new_conversation"/>
-		<check_box label="音声通話の着信" name="incoming_voice_call"/>
-		<check_box label="テレポートのオファー" name="teleport_offer"/>
-		<check_box label="インベントリのオファー" name="inventory_offer"/>
-	</panel>
-	<panel name="log_settings">
-		<text name="logging_label">
-			保存：
-		</text>
-		<combo_box name="conversation_log_combo">
-			<item label="ログと会話履歴" name="log_and_transcripts"/>
-			<item label="ログのみ" name="log_only"/>
-			<item label="ログか会話履歴なし" name="no_log_or_transcript"/>
-		</combo_box>
-		<button label="ログをクリア…" name="clear_log"/>
-		<button label="会話履歴を削除…" name="delete_transcripts"/>
-		<text name="log_location_label">
-			場所：
-		</text>
-		<line_editor name="log_path_string"/>
-		<button label="参照…" label_selected="参照…" name="log_path_button"/>
-	</panel>
-	<button label="翻訳…" name="ok_btn"/>
-	<button name="autoreplace_showgui" label="自動置換…"/>
-	<button name="spellcheck_showgui" label="スペルチェック…"/>
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<panel
+    border="false"
+    height="408"
+    label="テキストチャット"
+    layout="topleft"
+    name="chat"
+    width="517">
+  <!-- Vertical stack without scrolling -->
+  <layout_stack
+      name="chat_prefs_stack"
+      layout="topleft"
+      orientation="vertical"
+      follows="left|top|right"
+      left="13"
+      top="10"
+      width="492"
+      height="388">
+    <!-- General -->
+    <layout_panel
+        name="general_chat_settings"
+        layout="topleft"
+        follows="left|top|right"
+        auto_resize="false"
+        user_resize="false"
+        height="82">
+      <check_box control_name="AlchemyNearbyChatInput" height="16" label="近くのチャット入力でチャットバーを使用する" layout="topleft" left="0" top="0" name="use_chat_bar" width="330"/>
+      <check_box control_name="ChatAutocompleteGestures" height="16" label="ローカルチャットでジェスチャーを自動補完する" layout="topleft" left="0" top_pad="3" name="auto_complete_gestures" width="330"/>
+      <check_box control_name="PlayTypingAnim" height="16" label="チャット時にタイピングアニメーションを再生する" layout="topleft" left="0" top_pad="3" name="play_typing_animation" width="330"/>
+      <check_box control_name="AlchemyChatShowAccountName" height="16" label="表示名の横にアカウント名を表示" layout="topleft" left="0" top_pad="3" name="show_legacy_in_chat" width="330"/>
+      <!-- Right column -->
+      <text layout="topleft" follows="left|top" left="280" height="12" name="font_name" width="80" top="0">フォント名：</text>
+      <combo_box control_name="ChatFontName" height="21" layout="topleft" follows="left|top" name="chat_font_name" left_pad="5" top_delta="-4" width="120">
+        <item label="IBM Plex" name="IBMPlex" value="IBMPlex"/>
+        <item label="Noto Sans" name="NotoSans" value="NotoSans"/>
+        <item label="Open Dyslexic" name="OpenDyslexic" value="OpenDyslexic"/>
+        <item label="Sans Serif" name="SansSerif" value="SansSerif"/>
+        <item label="Source Sans" name="SourceSans" value="SourceSans"/>
+        <item label="Ubuntu" name="Ubuntu" value="Ubuntu"/>
+        <item label="Cascadia Code" name="CascadiaCode" value="CascadiaCode"/>
+        <item label="Fira Code" name="FiraCode" value="FiraCode"/>
+        <item label="IBM Plex Mono" name="IBMPlexMono" value="IBMPlexMono"/>
+        <item label="Jetbrains Mono" name="JetbrainsMono" value="JetbrainsMono"/>
+        <item label="Monaspace Argon" name="MonaspaceArgon" value="MonaspaceArgon"/>
+        <item label="Monaspace Krypton" name="MonaspaceKrypton" value="MonaspaceKrypton"/>
+        <item label="Monaspace Neon" name="MonaspaceNeon" value="MonaspaceNeon"/>
+        <item label="Monaspace Xenon" name="MonaspaceXenon" value="MonaspaceXenon"/>
+        <item label="Monospace" name="Monospace" value="Monospace"/>
+        <item label="Noto Sans Mono" name="NotoSansMono" value="NotoSansMono"/>
+        <item label="Open Dyslexic Mono" name="OpenDyslexicMono" value="OpenDyslexicMono"/>
+        <item label="Source Code Pro" name="SourceCodePro" value="SourceCodePro"/>
+        <item label="Ubuntu Mono" name="UbuntuMono" value="UbuntuMono"/>
+      </combo_box>
+      <text layout="topleft" follows="left|top" left="280" height="12" name="font_size" width="80" top_pad="6">サイズ：</text>
+      <combo_box control_name="ChatFontSize" height="21" layout="topleft" follows="left|top" name="chat_font_size" left_pad="5" top_delta="-4" width="120">
+        <item label="等幅" name="Monospace" value="-1"/>
+        <item label="小" name="Small" value="0"/>
+        <item label="中" name="Medium" value="1"/>
+        <item label="大" name="Large" value="2"/>
+        <item label="特大" name="Huge" value="3"/>
+      </combo_box>
+      <check_box control_name="UseChatBubbles" height="16" label="吹き出しチャット" layout="topleft" left="280" top_pad="4" name="bubble_text_chat" width="330"/>
+    </layout_panel>
+    <!-- IM notifications (more vertical spacing between the 6 rows) -->
+    <layout_panel
+        name="im_notification_settings"
+        layout="topleft"
+        follows="left|top|right"
+        auto_resize="false"
+        user_resize="false"
+        height="160">
+      <text font="SansSerifSmall" follows="left|top" height="14" layout="topleft" left="0" name="email_settings" skip_link_underline="true" top="0" type="string" width="400">
+        [https://accounts.secondlife.com/change_email?lang=ja-JP オフライン時のＩＭのメール送信先の設定]
+      </text>
+      <!-- 1) Friend IMs -->
+      <text layout="topleft" height="12" name="friend_ims" width="145" left="0" top_pad="8">フレンドのＩＭ：</text>
+      <combo_box control_name="NotificationFriendIMOptions" height="22" layout="topleft" left_pad="5" top_delta="-4" name="FriendIMOptions" width="223">
+        <item label="会話ウィンドウを開く" name="OpenConversationsWindow" value="openconversations"/>
+        <item label="メッセージをポップアップ" name="PopUpMessage" value="toast"/>
+        <item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton" value="flash"/>
+        <item label="アクションなし" name="NoAction" value="noaction"/>
+      </combo_box>
+      <check_box control_name="PlaySoundFriendIM" height="18" label="サウンド再生" layout="topleft" name="play_sound_friend_im" left_pad="7" top_delta="0" width="28"/>
+      <!-- 2) Non-friend IMs -->
+      <text layout="topleft" height="12" name="non_friend_ims" width="145" left="0" top_pad="8">フレンドでない人からのＩＭ：</text>
+      <combo_box control_name="NotificationNonFriendIMOptions" height="22" layout="topleft" left_pad="5" top_delta="-4" name="NonFriendIMOptions" width="223">
+        <item label="会話ウィンドウを開く" name="OpenConversationsWindow" value="openconversations"/>
+        <item label="メッセージをポップアップ" name="PopUpMessage" value="toast"/>
+        <item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton" value="flash"/>
+        <item label="アクションなし" name="NoAction" value="noaction"/>
+      </combo_box>
+      <check_box control_name="PlaySoundNonFriendIM" height="18" label="サウンド再生" layout="topleft" name="play_sound_non_friend_im" left_pad="7" top_delta="0" width="28"/>
+      <!-- 3) Conference IMs -->
+      <text layout="topleft" left="0" height="12" name="conference_ims" width="145" top_pad="8">会話ＩＭ：</text>
+      <combo_box control_name="NotificationConferenceIMOptions" height="22" layout="topleft" left_pad="5" top_delta="-4" name="ConferenceIMOptions" width="223">
+        <item label="会話ウィンドウを開く" name="OpenConversationsWindow" value="openconversations"/>
+        <item label="メッセージをポップアップ" name="PopUpMessage" value="toast"/>
+        <item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton" value="flash"/>
+        <item label="アクションなし" name="NoAction" value="noaction"/>
+      </combo_box>
+      <check_box control_name="PlaySoundConferenceIM" height="18" label="サウンド再生" layout="topleft" name="play_sound_conference_im" left_pad="7" top_delta="0" width="28"/>
+      <!-- 4) Group chat -->
+      <text layout="topleft" left="0" height="12" name="group_chat" width="145" top_pad="8">グループチャット：</text>
+      <combo_box control_name="NotificationGroupChatOptions" height="22" layout="topleft" left_pad="5" top_delta="-4" name="GroupChatOptions" width="223">
+        <item label="会話ウィンドウを開く" name="OpenConversationsWindow" value="openconversations"/>
+        <item label="メッセージをポップアップ" name="PopUpMessage" value="toast"/>
+        <item label="ツールバーのボタンをフラッシュ" name="FlashToolbarButton" value="flash"/>
+        <item label="アクションなし" name="NoAction" value="noaction"/>
+      </combo_box>
+      <check_box control_name="PlaySoundGroupChatIM" height="18" label="サウンド再生" layout="topleft" name="play_sound_group_chat_im" left_pad="7" top_delta="0" width="28"/>
+      <!-- 5) Nearby chat -->
+      <text layout="topleft" left="0" height="12" name="nearby_chat" width="145" top_pad="8">近くのチャット：</text>
+      <combo_box control_name="NotificationNearbyChatOptions" height="22" layout="topleft" left_pad="5" top_delta="-4" name="NearbyChatOptions" width="223">
+        <item label="会話ウィンドウを開く" name="OpenConversationsWindow" value="openconversations"/>
+        <item label="メッセージをポップアップ" name="PopUpMessage" value="toast"/>
+        <item label="ツールバーのボタンをフラッシュ" name="FlashToolBarButton" value="flash"/>
+        <item label="アクションなし" name="NoAction" value="noaction"/>
+      </combo_box>
+      <check_box control_name="PlaySoundNearbyChatIM" height="18" label="サウンド再生" layout="topleft" name="play_sound_nearby_chat_im" left_pad="7" top_delta="0" width="28"/>
+      <!-- 6) Object IMs -->
+      <text layout="topleft" left="0" height="12" name="object_ims" width="145" top_pad="8">オブジェクトからのＩＭ：</text>
+      <combo_box control_name="NotificationObjectIMOptions" height="22" layout="topleft" left_pad="5" top_delta="-4" name="ObjectIMOptions" width="223">
+        <item label="会話ウィンドウを開く" name="OpenConversationsWindow" value="openconversations"/>
+        <item label="メッセージをポップアップ" name="PopUpMessage" value="toast"/>
+        <item label="ツールバーのボタンをフラッシュ" name="FlashToolBarButton" value="flash"/>
+        <item label="アクションなし" name="NoAction" value="noaction"/>
+      </combo_box>
+      <check_box control_name="PlaySoundObjectIM" height="18" label="サウンド再生" layout="topleft" name="play_sound_object_im" left_pad="7" top_delta="0" width="28"/>
+    </layout_panel>
+    <!-- Play sound (raised up; minimal gap to divider) -->
+    <layout_panel
+        name="play_sound_settings"
+        layout="topleft"
+        follows="left|top|right"
+        auto_resize="false"
+        user_resize="false"
+        height="52">
+      <text layout="topleft" left="0" name="play_sound" width="100" top_pad="2" visible="true">再生するサウンド：</text>
+      <check_box control_name="PlaySoundNewConversation" height="16" label="新しい会話" layout="topleft" left_pad="15" top_pad="-8" name="new_conversation" width="150"/>
+      <check_box control_name="PlaySoundIncomingVoiceCall" height="16" label="音声通話の着信" layout="topleft" top_pad="2" name="incoming_voice_call" width="150"/>
+      <check_box control_name="PlaySoundTeleportOffer" height="16" label="テレポートのオファー" layout="topleft" left_pad="35" top_pad="-30" name="teleport_offer" width="150"/>
+      <check_box control_name="PlaySoundInventoryOffer" height="16" label="インベントリのオファー" layout="topleft" top_pad="2" name="inventory_offer" width="150"/>
+      <!-- Divider above Save -->
+      <view_border
+          bevel_style="in"
+          height="10"
+          layout="topleft"
+          left="0"
+          name="divider_before_save"
+          top_pad="3"
+          width="492"/>
+    </layout_panel>
+    <!-- Log (Save/Location slightly lower so bar is visible and buttons fit) -->
+    <layout_panel
+        name="log_settings"
+        layout="topleft"
+        follows="left|top|right"
+        auto_resize="false"
+        user_resize="false"
+        height="60">
+      <text name="logging_label" layout="topleft" left="0" text_color="White" height="12" top_pad="7" width="55">保存：</text>
+      <combo_box enabled="false" control_name="KeepConversationLogTranscripts" height="21" layout="topleft" left_pad="5" name="conversation_log_combo" top="0" width="165">
+        <item name="log_and_transcripts" label="ログと会話履歴" value="2"/>
+        <item name="log_only" label="ログのみ" value="1"/>
+        <item name="no_log_or_transcript" label="ログか会話履歴なし" value="0"/>
+      </combo_box>
+      <button enabled="false" height="21" label="ログをクリア…" layout="topleft" left_pad="5" top="0" name="clear_log" width="110">
+        <commit_callback function="Pref.ClearLog"/>
+      </button>
+      <button enabled="false" height="21" label="会話履歴を削除…" layout="topleft" left_pad="5" top="0" name="delete_transcripts" width="147">
+        <button.commit_callback function="Pref.DeleteTranscripts"/>
+      </button>
+      <text name="log_location_label" layout="topleft" left="0" text_color="White" height="12" top_pad="7" width="55">場所：</text>
+      <line_editor control_name="InstantMessageLogPath" border_style="line" border_thickness="1" font="SansSerif" height="21" layout="topleft" left_pad="55" max_length_bytes="4096" name="log_path_string" top_delta="-4" width="185"/>
+      <button enabled="false" follows="left|top" height="21" label="参照…" label_selected="参照…" layout="topleft" left_pad="5" name="log_path_button" top_delta="0" width="112">
+        <commit_callback function="Pref.LogPath"/>
+      </button>
+    </layout_panel>
+    <!-- Bottom buttons -->
+    <layout_panel
+        name="bottom_buttons"
+        layout="topleft"
+        follows="left|top|right"
+        auto_resize="false"
+        user_resize="false"
+        height="30">
+      <button height="23" label="翻訳…" layout="topleft" follows="left|top" left="0" top="0" name="ok_btn" width="170">
+        <commit_callback function="Pref.TranslationSettings"/>
+      </button>
+      <button height="23" layout="topleft" follows="left|top" left_pad="5" name="autoreplace_showgui" commit_callback.function="Pref.AutoReplace" label="自動置換…" width="150"/>
+      <button height="23" layout="topleft" follows="left|top" left_pad="5" name="spellcheck_showgui" commit_callback.function="Pref.SpellChecker" label="スペルチェック…" width="150"/>
+    </layout_panel>
+  </layout_stack>
 </panel>
