@@ -14,6 +14,9 @@
 		低
 	</text>
 	<check_box label="垂直同期を有効化" name="vsync" tool_tip="フレームレートをモニターのリフレッシュレートに同期させ、スムーズなパフォーマンスを実現します。"/>
+	<!-- FPS limiter -->
+	<check_box label="フレームレート制限" name="LimitFPS" tool_tip="FPSを制限しCPU/GPU使用率を低減する"/>
+
 	<text name="AvatarText">
 		アバター
 	</text>
