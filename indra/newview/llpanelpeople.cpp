@@ -777,24 +777,30 @@ void LLPanelPeople::updateAccordionTabTitles()
     // who knows if this changes for any other UI imrprovesments. -- FLN
     if (FRIENDS_TAB_NAME == getActiveTabName())
     {
-        if (mOnlineFriendList)
+        if (mOnlineFriendList && mAccordionOnlineTab)
         {
-            mOnlineFriendList->setDirty(true, !mOnlineFriendList->filterHasMatches());
-            LLStringUtil::format_map_t args_online;
-            args_online["[COUNT]"] = std::to_string(mOnlineFriendList->size());
-            std::string online_title = getString("online_friends_count", args_online);
+            // Use the number of display-target UUID vectors without relying on asynchronous row reconstruction
+            const S32 online_count = (S32)mOnlineFriendList->getIDs().size();
 
+            LLStringUtil::format_map_t args_online;
+            args_online["[COUNT]"] = llformat("%d", online_count);
+            std::string online_title = getString("online_friends_count", args_online);
             mAccordionOnlineTab->setTitle(online_title);
+
+            // If necessary, set dirty at the end (do not call size() before updating the title)
+            mOnlineFriendList->setDirty(true, !mOnlineFriendList->filterHasMatches());
         }
 
-        if (mAllFriendList)
+        if (mAllFriendList && mAccordionAllTab)
         {
-            mAllFriendList->setDirty(true, !mAllFriendList->filterHasMatches());
-            LLStringUtil::format_map_t args_all;
-            args_all["[COUNT]"] = std::to_string(mAllFriendList->size());
-            std::string all_title = getString("all_friends_count", args_all);
+            const S32 all_count = (S32)mAllFriendList->getIDs().size();
 
+            LLStringUtil::format_map_t args_all;
+            args_all["[COUNT]"] = llformat("%d", all_count);
+            std::string all_title = getString("all_friends_count", args_all);
             mAccordionAllTab->setTitle(all_title);
+
+            mAllFriendList->setDirty(true, !mAllFriendList->filterHasMatches());
         }
     }
 }
@@ -842,6 +848,8 @@ void LLPanelPeople::updateFriendList()
 
     all_friendsp.clear();
     online_friendsp.clear();
+    // update TabTitles
+    updateAccordionTabTitles();
 
     if (!all_buddies.empty())
     {
