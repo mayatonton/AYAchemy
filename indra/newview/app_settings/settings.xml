@@ -16289,5 +16289,45 @@
 		<key>Value</key>
 		<integer>0</integer>
 	</map>
+
+  <key>RenderShadingMode</key>
+  <map>
+    <key>Comment</key><string>0=Current, 1=Filmic, 2=Toon</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>S32</string>
+    <key>Value</key><integer>0</integer>
+  </map>
+
+  <key>RenderExposureEV</key>
+  <map>
+    <key>Comment</key><string>Exposure offset (EV) applied in Filmic mode</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>0.0</real>
+  </map>
+
+  <key>RenderToonLevels</key>
+  <map>
+    <key>Comment</key><string>Toon quantization levels (integer, recommended 2-16)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>S32</string>
+    <key>Value</key><integer>4</integer>
+  </map>
+
+  <key>RenderOutlineOpacity</key>
+  <map>
+    <key>Comment</key><string>Outline opacity for toon edges</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>0.9</real>
+  </map>
+
+  <key>RenderEdgeThreshold</key>
+  <map>
+    <key>Comment</key><string>Edge detection threshold</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>0.25</real>
+  </map>
 </map>
 </llsd>

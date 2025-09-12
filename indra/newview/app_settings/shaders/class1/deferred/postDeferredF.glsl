@@ -22,13 +22,10 @@
  * Linden Research, Inc., 945 Battery Street, San Francisco, CA  94111  USA
  * $/LicenseInfo$
  */
-
 /*[EXTRA_CODE_HERE]*/
-
 out vec4 frag_color;
 
 uniform sampler2D diffuseRect;
-
 uniform mat4 inv_proj;
 uniform vec2 screen_res;
 uniform float max_cof;
@@ -36,21 +33,20 @@ uniform float res_scale;
 
 in vec2 vary_fragcoord;
 
+// 将来拡張用（toneMapF側で輪郭適用済みのため通常は未使用）
+uniform int   uShadingMode;
+uniform float uOutlineOpacity;
+uniform float uEdgeThreshold;
+
 void dofSample(inout vec4 diff, inout float w, float min_sc, vec2 tc)
 {
     vec4 s = texture(diffuseRect, tc);
-
     float sc = abs(s.a*2.0-1.0)*max_cof;
-
-    if (sc > min_sc) //sampled pixel is more "out of focus" than current sample radius
+    if (sc > min_sc)
     {
         float wg = 0.25;
-
-        // de-weight dull areas to make highlights 'pop'
         wg += s.r+s.g+s.b;
-
         diff += wg*s;
-
         w += wg;
     }
 }
@@ -58,31 +54,20 @@ void dofSample(inout vec4 diff, inout float w, float min_sc, vec2 tc)
 void dofSampleNear(inout vec4 diff, inout float w, float min_sc, vec2 tc)
 {
     vec4 s = texture(diffuseRect, tc);
-
     float wg = 0.25;
-
-    // de-weight dull areas to make highlights 'pop'
     wg += s.r+s.g+s.b;
-
     diff += wg*s;
-
     w += wg;
 }
 
 void main()
 {
     vec2 tc = vary_fragcoord.xy;
-
     vec4 diff = texture(diffuseRect, vary_fragcoord.xy);
-
     {
         float w = 1.0;
-
         float sc = (diff.a*2.0-1.0)*max_cof;
-
         float PI = 3.14159265358979323846264;
-
-        // sample quite uniformly spaced points within a circle, for a circular 'bokeh'
 #if FRONT_BLUR
         if (sc > 0.5)
         {
@@ -91,10 +76,9 @@ void main()
                 int its = int(max(1.0,(sc*3.7)));
                 for (int i=0; i<its; ++i)
                 {
-                    float ang = sc+i*2*PI/its; // sc is added for rotary perturbance
+                    float ang = sc+i*2*PI/its;
                     float samp_x = sc*sin(ang);
                     float samp_y = sc*cos(ang);
-                    // you could test sample coords against an interesting non-circular aperture shape here, if desired.
                     dofSampleNear(diff, w, sc, vary_fragcoord.xy + (vec2(samp_x,samp_y) / screen_res));
                 }
                 sc -= 1.0;
@@ -111,18 +95,15 @@ void main()
                 int its = int(max(1.0,(sc*3.7)));
                 for (int i=0; i<its; ++i)
                 {
-                    float ang = sc+i*2*PI/its; // sc is added for rotary perturbance
+                    float ang = sc+i*2*PI/its;
                     float samp_x = sc*sin(ang);
                     float samp_y = sc*cos(ang);
-                    // you could test sample coords against an interesting non-circular aperture shape here, if desired.
                     dofSample(diff, w, sc, vary_fragcoord.xy + (vec2(samp_x,samp_y) / screen_res));
                 }
                 sc -= 1.0;
             }
         }
-
         diff /= w;
     }
-
     frag_color = diff;
 }

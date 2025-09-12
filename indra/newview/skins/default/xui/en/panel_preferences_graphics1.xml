@@ -343,7 +343,7 @@ width="100">
     layout="topleft"
     left="10"
     name="PrefSaveButton"
-    top="310"
+    top="280"
     width="200">
     <button.commit_callback
       function="Pref.PrefSave"
@@ -385,7 +385,7 @@ width="100">
     layout="topleft"
     left="10"
     name="Defaults"
-    top_delta="65"
+    top_delta="35"
     width="210">
     <button.commit_callback
       function="Pref.HardwareDefaults" />
@@ -404,5 +404,46 @@ width="100">
       function="Pref.Advanced"
       parameter="advanced" />
   </button>
+
+
+<!-- Shading -->
+<combo_box
+  follows="top|left"
+  layout="topleft"
+  name="shading_mode_combo"
+  label="Shading Mode"
+  control_name="RenderShadingMode"
+  commit_on_selection="true"
+  allow_text_entry="false"
+  top_delta="35"
+  left="10"
+  width="220"
+  height="23">
+  <combo_item name="current" label="Current"         value="0"/>
+  <combo_item name="filmic"  label="Filmic (ACES)"   value="1"/>
+  <combo_item name="toon"    label="Toon"            value="2"/>
+</combo_box>
+<slider follows="top|left" layout="topleft"
+        name="exposure_ev" label="Exposure (EV)"
+        control_name="RenderExposureEV"
+        min_val="-5.0" max_val="5.0" increment="0.1"
+        left="30" width="200" height="23"/>
+<slider follows="top|left" layout="topleft"
+        name="toon_levels" label="Toon Levels"
+        control_name="RenderToonLevels"
+        decimal_digits="0"
+        min_val="2" max_val="8" increment="1"
+        top_delta="0" left_pad="20" width="200" height="23"/>
+<slider follows="top|left" layout="topleft"
+        name="outline_opacity" label="Outline Opacity"
+        control_name="RenderOutlineOpacity"
+        min_val="0.0" max_val="1.0" increment="0.05"
+        left="30" width="200" height="23"/>
+<slider follows="top|left" layout="topleft"
+        name="edge_threshold" label="Edge Threshold"
+        control_name="RenderEdgeThreshold"
+        min_val="0.05" max_val="0.6" increment="0.01"
+        top_delta="0" left_pad="20" width="200" height="23"/>
+<!-- Shading -->
 
 </panel>
