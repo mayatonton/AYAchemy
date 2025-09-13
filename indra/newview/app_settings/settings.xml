@@ -16290,17 +16290,17 @@
 		<integer>0</integer>
 	</map>
 
-  <key>RenderShadingMode</key>
+  <!-- <key>RenderShadingMode</key>
   <map>
     <key>Comment</key><string>0=Current, 1=Filmic (ACES)</string>
     <key>Persist</key><integer>1</integer>
     <key>Type</key><string>S32</string>
     <key>Value</key><integer>1</integer>
-  </map>
+  </map> -->
 
   <key>RenderFilmicUIEnabled</key>
   <map>
-    <key>Comment</key><string>Auto: true when RenderShadingMode==1 (Filmic)</string>
+    <key>Comment</key><string>Auto: true when RenderToneMapType==5 (Filmic)</string>
     <key>Persist</key><integer>0</integer>
     <key>Type</key><string>Boolean</string>
     <key>Value</key><boolean>false</boolean>

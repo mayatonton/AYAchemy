@@ -3,7 +3,22 @@
  *
  * $LicenseInfo:firstyear=2021&license=viewerlgpl$
  * Alchemy Viewer Source Code
- * Copyright (C) 2021
+ * Copyright (C) 2021, Rye Mutt
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation;
+ * version 2.1 of the License only.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
  * $/LicenseInfo$
  */
 /*[EXTRA_CODE_HERE]*/
@@ -15,10 +30,10 @@ uniform sampler2D exposureMap;
 uniform float exposure;
 uniform float aces_mix;
 
-// Shading mode (Current=0, Filmic=1)
-uniform int   uShadingMode;
+// RenderToneMapType: 0=HDR Debug, 1=ACES(Hill), 2=Uchimura, 3=AMD LPM, 4=Uncharted(Hable), 5=Filmic
+uniform int   uToneMapType;
 
-// Filmic options
+// Filmic 用オプション（ttype==5のときのみ使用）
 uniform float uExposureEV;
 uniform float uWB_TempK;
 uniform float uWB_Tint;
@@ -32,29 +47,34 @@ vec3 linear_to_srgb(vec3 cl);
 void RunLPMFilter(inout vec3 diff);
 #endif
 
-// ACES Hill fit
-const mat3 ACESInputMat = mat3(
+// -------------------- ACES (Hill fitted) --------------------
+const mat3 ACESInputMat = mat3
+(
     0.59719, 0.07600, 0.02840,
     0.35458, 0.90834, 0.13383,
-    0.04823, 0.01566, 0.83777);
-const mat3 ACESOutputMat = mat3(
+    0.04823, 0.01566, 0.83777
+);
+const mat3 ACESOutputMat = mat3
+(
     1.60475, -0.10208, -0.00327,
    -0.53108,  1.10813, -0.07276,
-   -0.07367, -0.00605,  1.07602);
-
-vec3 RRTAndODTFit(vec3 color){
+   -0.07367, -0.00605,  1.07602
+);
+vec3 RRTAndODTFit(vec3 color)
+{
     vec3 a = color * (color + 0.0245786) - 0.000090537;
     vec3 b = color * (0.983729 * color + 0.4329510) + 0.238081;
     return a / b;
 }
-vec3 ACES_Fitted(vec3 c){
-    c = ACESInputMat * c;
-    c = RRTAndODTFit(c);
-    c = ACESOutputMat * c;
-    return clamp(c, 0.0, 1.0);
+vec3 ACES_Hill(vec3 color)
+{
+    color = ACESInputMat * color;
+    color = RRTAndODTFit(color);
+    color = ACESOutputMat * color;
+    return color;
 }
 
-// Uchimura
+// -------------------- Uchimura --------------------
 vec3 uchimura(vec3 x, float P, float a, float m, float l, float c, float b)
 {
     float l0 = ((P - m) * l) / a;
@@ -79,19 +99,19 @@ uniform vec3 tone_uchimura_a = vec3(1.0, 1.0, 0.22);
 uniform vec3 tone_uchimura_b = vec3(0.4, 1.33, 0.0);
 vec3 uchimura(vec3 x)
 {
-    float P = tone_uchimura_a.x;
-    float a = tone_uchimura_a.y;
-    float m = tone_uchimura_a.z;
-    float l = tone_uchimura_b.x;
-    float c = tone_uchimura_b.y;
-    float b = 0.0;
+    float P = tone_uchimura_a.x; // max display brightness
+    float a = tone_uchimura_a.y; // contrast
+    float m = tone_uchimura_a.z; // linear section start
+    float l = tone_uchimura_b.x; // linear section length
+    float c = tone_uchimura_b.y; // black
+    float b = 0.0;               // pedestal
     return uchimura(x, P, a, m, l, c, b);
 }
 
-// Uncharted/Hable
-uniform vec3 tone_uncharted_a = vec3(0.22, 0.30, 0.10);
-uniform vec3 tone_uncharted_b = vec3(0.20, 0.01, 0.30);
-uniform vec3 tone_uncharted_c = vec3(8.0, 2.0, 0.0);
+// -------------------- Hable/Uncharted --------------------
+uniform vec3 tone_uncharted_a = vec3(0.22, 0.30, 0.10); // A, B, C
+uniform vec3 tone_uncharted_b = vec3(0.20, 0.01, 0.30); // D, E, F
+uniform vec3 tone_uncharted_c = vec3(8.0, 2.0, 0.0);    // W, ExposureBias, Unused
 vec3 Uncharted2Tonemap(vec3 x)
 {
     float ExposureBias = tone_uncharted_c.y;
@@ -101,6 +121,7 @@ vec3 Uncharted2Tonemap(vec3 x)
     float D = tone_uncharted_b.x;
     float E = tone_uncharted_b.y;
     float F = tone_uncharted_b.z;
+
     return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
 }
 vec3 uncharted2(vec3 col)
@@ -108,8 +129,15 @@ vec3 uncharted2(vec3 col)
     return Uncharted2Tonemap(col)/Uncharted2Tonemap(vec3(tone_uncharted_c.x));
 }
 
-// Filmic helpers
-float luma(vec3 c){ return dot(c, vec3(0.2126,0.7152,0.0722)); }
+// -------------------- Filmic 補助 --------------------
+float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+vec3 ACES_Fitted(vec3 c)
+{
+    c = ACESInputMat * c;
+    c = RRTAndODTFit(c);
+    c = ACESOutputMat * c;
+    return clamp(c, 0.0, 1.0);
+}
 vec3 whiteBalanceGains(float tempK, float tint)
 {
     float t = clamp((tempK - 6500.0) / 1000.0, -6.0, 6.0);
@@ -117,7 +145,7 @@ vec3 whiteBalanceGains(float tempK, float tint)
     float b = 1.0 + 0.10 * ( t);
     float g = 1.0 + 0.02 * (-t);
     g *= (1.0 + clamp(tint, -1.0, 1.0) * 0.1);
-    return vec3(max(r,0.01), max(g,0.01), max(b,0.01));
+    return vec3(max(r, 0.01), max(g, 0.01), max(b, 0.01));
 }
 vec3 applyWhiteBalance(vec3 color, float tempK, float tint)
 {
@@ -149,13 +177,14 @@ void main()
     diff.rgb *= exposure * exp_scale;
 #endif
 
-    // Filmic: ShadingMode==1 のときのみ適用
-    if (uShadingMode == 1)
+    // Filmic: RenderToneMapType==5 のときのみ実行（他タイプは既存のTONEMAP_METHODへ）
+    if (uToneMapType == 5)
     {
         if (uExposureEV != 0.0)
         {
             diff.rgb *= exp2(uExposureEV);
         }
+
         float tempK = (uWB_TempK > 0.0) ? uWB_TempK : 6500.0;
         float tint  = uWB_Tint;
         float contr = (uFilmicContrast > 0.0) ? uFilmicContrast : 1.0;
@@ -171,9 +200,9 @@ void main()
         return;
     }
 
-    // Current
+    // ───────── 既存トーンマップ（プログラムのTONEMAP_METHODで決定）─────────
 #if TONEMAP_METHOD == 1 // Aces Hill method
-    diff.rgb = mix(ACES_Fitted(diff.rgb), diff.rgb, aces_mix);
+    diff.rgb = mix(ACES_Hill(diff.rgb), diff.rgb, aces_mix);
 #elif TONEMAP_METHOD == 2 // Uchimura's Gran Turismo method
     diff.rgb = uchimura(diff.rgb);
 #elif TONEMAP_METHOD == 3 // AMD Tonemapper

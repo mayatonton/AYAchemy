@@ -405,22 +405,25 @@ width="100">
       parameter="advanced" />
   </button>
 
-
 <!-- Shading -->
 <combo_box
   follows="top|left"
   layout="topleft"
   name="shading_mode_combo"
   label="Shading Mode"
-  control_name="RenderShadingMode"
+  control_name="RenderToneMapType"
   commit_on_selection="true"
   allow_text_entry="false"
   top_delta="35"
   left="10"
   width="220"
   height="23">
-  <combo_item name="current" label="* Default"         value="0"/>
-  <combo_item name="filmic"  label="Filmic (ACES)"   value="1"/>
+  <combo_item name="current_1"  label="* Default"          value="1"/>
+  <combo_item name="current_0"  label="HDR Debug"          value="0"/>
+  <combo_item name="current_2"  label="Uchimura (GT)"      value="2"/>
+  <combo_item name="current_3"  label="AMD LPM"            value="3"/>
+  <combo_item name="current_4"  label="Uncharted (Hable)"  value="4"/>
+  <combo_item name="filmic"     label="Filmic (ACES)"      value="5"/>
 </combo_box>
 
 <!-- Filmic parameters (disabled unless Filmic is selected) -->

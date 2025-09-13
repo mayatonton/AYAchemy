@@ -78,7 +78,7 @@ static LLStaticHashedString uFilmicSaturation("uFilmicSaturation");
 // Filmic UI の有効/無効（RenderShadingMode==1）を同期
 static void updateFilmicUIEnabled()
 {
-    gSavedSettings.setBOOL("RenderFilmicUIEnabled", gSavedSettings.getS32("RenderShadingMode") == 1);
+    gSavedSettings.setBOOL("RenderFilmicUIEnabled", gSavedSettings.getU32("RenderToneMapType") == 5);
 }
 
 // LutCube（省略せず元のまま）
@@ -225,7 +225,7 @@ ALRenderUtil::ALRenderUtil()
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenDLSSharpness")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenDLSDenoise")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenCASSharpness")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
-    mSettingConnections.push_back(gSavedSettings.getControl("RenderShadingMode")->getSignal()->connect(boost::bind(&updateFilmicUIEnabled)));
+    mSettingConnections.push_back(gSavedSettings.getControl("RenderToneMapType")->getSignal()->connect(boost::bind(&updateFilmicUIEnabled)));
 }
 
 ALRenderUtil::~ALRenderUtil()
@@ -333,21 +333,32 @@ void ALRenderUtil::renderTonemap(LLRenderTarget* src, LLRenderTarget* exposure, 
     static LLCachedControl<bool> no_post(gSavedSettings, "RenderDisablePostProcessing", false);
     static LLCachedControl<bool> should_auto_adjust(gSavedSettings, "RenderSkyAutoAdjustLegacy", true);
 
+    // RenderToneMapType: 0=HDR Debug, 1=ACES(Hill), 2=Uchimura, 3=AMD LPM, 4=Uncharted(Hable), 5=Filmic
+    U32 ttype = gSavedSettings.getU32("RenderToneMapType");
+    ttype = llclamp(ttype, 0, 5);
+
+    // GUIの有効/無効を自動更新（Filmic時のみ有効）
+    gSavedSettings.setBOOL("RenderFilmicUIEnabled", ttype == 5);
+
     LLGLSLShader* tone_shader = nullptr;
+
     if ((no_post && gFloaterTools->isAvailable()) ||
         LLEnvironment::instance().getCurrentSky()->getReflectionProbeAmbiance(should_auto_adjust) == 0.f)
     {
+        // no-post or zero ambiance → デバッグ/HDRパス
         tone_shader = &gDeferredPostTonemapProgram;
     }
     else
     {
-        switch (mTonemapType)
+        switch (ttype)
         {
-        default:
-        case ALTonemap::TONEMAP_ACES_HILL:  tone_shader = &gDeferredPostTonemapACESProgram;  break;
-        case ALTonemap::TONEMAP_UCHIMURA:   tone_shader = &gDeferredPostTonemapUchiProgram;  break;
-        case ALTonemap::TONEMAP_AMD:        tone_shader = &gDeferredPostTonemapLPMProgram;   break;
-        case ALTonemap::TONEMAP_UNCHARTED:  tone_shader = &gDeferredPostTonemapHableProgram; break;
+        case 0: tone_shader = &gDeferredPostTonemapProgram;        break; // HDR Debug
+        case 1: tone_shader = &gDeferredPostTonemapACESProgram;    break; // ACES (Hill)
+        case 2: tone_shader = &gDeferredPostTonemapUchiProgram;    break; // Uchimura (GT)
+        case 3: tone_shader = &gDeferredPostTonemapLPMProgram;     break; // AMD LPM
+        case 4: tone_shader = &gDeferredPostTonemapHableProgram;   break; // Uncharted (Hable)
+        case 5: tone_shader = &gDeferredPostTonemapHableProgram;   break; // Filmic (シェーダ側で早期適用)
+        default: tone_shader = &gDeferredPostTonemapACESProgram;   break;
         }
     }
 
@@ -363,14 +374,28 @@ void ALRenderUtil::renderTonemap(LLRenderTarget* src, LLRenderTarget* exposure, 
     F32 tone_exposure = llclamp(gSavedSettings.getF32("RenderExposure"), 0.5f, 4.f);
     tone_shader->uniform1f(al_exposure, tone_exposure);
 
-    // ShadingMode と Filmic パラメータ（0=Current, 1=Filmic）
-    S32 shading_mode   = llclamp(gSavedSettings.getS32("RenderShadingMode"), 0, 1);
-    tone_shader->uniform1i(uShadingMode, shading_mode);
-    tone_shader->uniform1f(uExposureEV,       gSavedSettings.getF32("RenderExposureEV"));
-    tone_shader->uniform1f(uWB_TempK,         gSavedSettings.getF32("RenderWBTempK"));
-    tone_shader->uniform1f(uWB_Tint,          gSavedSettings.getF32("RenderWBTint"));
-    tone_shader->uniform1f(uFilmicContrast,   gSavedSettings.getF32("RenderFilmicContrast"));
-    tone_shader->uniform1f(uFilmicSaturation, gSavedSettings.getF32("RenderFilmicSaturation"));
+    // Filmic/トーンマップ種別をシェーダへ
+    static LLStaticHashedString uToneMapType_h("uToneMapType");
+    tone_shader->uniform1i(uToneMapType_h, ttype);
+
+    // Filmicパラメータ（ttype==5 のときシェーダで使われる）
+    static LLStaticHashedString uExposureEV_h("uExposureEV");
+    static LLStaticHashedString uWB_TempK_h("uWB_TempK");
+    static LLStaticHashedString uWB_Tint_h("uWB_Tint");
+    static LLStaticHashedString uFilmicContrast_h("uFilmicContrast");
+    static LLStaticHashedString uFilmicSaturation_h("uFilmicSaturation");
+
+    F32 exposure_ev     = gSavedSettings.getF32("RenderExposureEV");       // -5..+5
+    F32 wb_tempK        = gSavedSettings.getF32("RenderWBTempK");          // 2500..15000
+    F32 wb_tint         = gSavedSettings.getF32("RenderWBTint");           // -1..+1
+    F32 film_contrast   = gSavedSettings.getF32("RenderFilmicContrast");   // 0.8..1.2
+    F32 film_saturation = gSavedSettings.getF32("RenderFilmicSaturation"); // 0.8..1.2 (UI上限2.0)
+
+    tone_shader->uniform1f(uExposureEV_h, exposure_ev);
+    tone_shader->uniform1f(uWB_TempK_h, wb_tempK);
+    tone_shader->uniform1f(uWB_Tint_h, wb_tint);
+    tone_shader->uniform1f(uFilmicContrast_h, film_contrast);
+    tone_shader->uniform1f(uFilmicSaturation_h, film_saturation);
 
     gPipeline.mScreenTriangleVB->setBuffer();
     gPipeline.mScreenTriangleVB->drawArrays(LLRender::TRIANGLES, 0, 3);
