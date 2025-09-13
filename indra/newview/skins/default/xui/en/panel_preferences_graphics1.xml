@@ -419,31 +419,56 @@ width="100">
   left="10"
   width="220"
   height="23">
-  <combo_item name="current" label="Current"         value="0"/>
+  <combo_item name="current" label="* Default"         value="0"/>
   <combo_item name="filmic"  label="Filmic (ACES)"   value="1"/>
-  <combo_item name="toon"    label="Toon"            value="2"/>
 </combo_box>
+
+<!-- Filmic parameters (disabled unless Filmic is selected) -->
+
+<!-- Move exposure_ev to the right of the combo box -->
 <slider follows="top|left" layout="topleft"
         name="exposure_ev" label="Exposure (EV)"
         control_name="RenderExposureEV"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="1"
         min_val="-5.0" max_val="5.0" increment="0.1"
-        left="30" width="200" height="23"/>
+        top_delta="0" left_pad="25" width="240" height="23"/>
+
+<!-- Place wb_tempk at the old exposure_ev position (first row below combo) -->
 <slider follows="top|left" layout="topleft"
-        name="toon_levels" label="Toon Levels"
-        control_name="RenderToonLevels"
+        name="wb_tempk" label="Temp (K)"
+        control_name="RenderWBTempK"
+        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="0"
-        min_val="2" max_val="8" increment="1"
-        top_delta="0" left_pad="20" width="200" height="23"/>
+        min_val="2500" max_val="15000" increment="50"
+        top_delta="28" left="10" width="240" height="23"/>
+
+<!-- Place wb_tint where wb_tempk used to be (same row, right column) -->
 <slider follows="top|left" layout="topleft"
-        name="outline_opacity" label="Outline Opacity"
-        control_name="RenderOutlineOpacity"
-        min_val="0.0" max_val="1.0" increment="0.05"
-        left="30" width="200" height="23"/>
+        name="wb_tint" label="WB Tint"
+        control_name="RenderWBTint"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="2"
+        min_val="-1.0" max_val="1.0" increment="0.01"
+        top_delta="0" left_pad="10" width="240" height="23"/>
+
+<!-- Place filmic_contrast on the next row (left column) -->
 <slider follows="top|left" layout="topleft"
-        name="edge_threshold" label="Edge Threshold"
-        control_name="RenderEdgeThreshold"
-        min_val="0.05" max_val="0.6" increment="0.01"
-        top_delta="0" left_pad="20" width="200" height="23"/>
+        name="filmic_contrast" label="Contrast"
+        control_name="RenderFilmicContrast"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="2"
+        min_val="0.80" max_val="1.20" increment="0.01"
+        top_delta="28" left="10" width="240" height="23"/>
+
+<!-- Place filmic_saturation to the right of filmic_contrast (same row, right column) -->
+<slider follows="top|left" layout="topleft"
+        name="filmic_saturation" label="Saturation"
+        control_name="RenderFilmicSaturation"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="2"
+        min_val="0.01" max_val="2.0" increment="0.01"
+        top_delta="0" left_pad="10" width="240" height="23"/>
 <!-- Shading -->
 
 </panel>

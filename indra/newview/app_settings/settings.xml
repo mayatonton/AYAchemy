@@ -16292,12 +16292,20 @@
 
   <key>RenderShadingMode</key>
   <map>
-    <key>Comment</key><string>0=Current, 1=Filmic, 2=Toon</string>
+    <key>Comment</key><string>0=Current, 1=Filmic (ACES)</string>
     <key>Persist</key><integer>1</integer>
     <key>Type</key><string>S32</string>
-    <key>Value</key><integer>0</integer>
+    <key>Value</key><integer>1</integer>
   </map>
 
+  <key>RenderFilmicUIEnabled</key>
+  <map>
+    <key>Comment</key><string>Auto: true when RenderShadingMode==1 (Filmic)</string>
+    <key>Persist</key><integer>0</integer>
+    <key>Type</key><string>Boolean</string>
+    <key>Value</key><boolean>false</boolean>
+  </map>
+  
   <key>RenderExposureEV</key>
   <map>
     <key>Comment</key><string>Exposure offset (EV) applied in Filmic mode</string>
@@ -16306,28 +16314,37 @@
     <key>Value</key><real>0.0</real>
   </map>
 
-  <key>RenderToonLevels</key>
+  <key>RenderWBTempK</key>
   <map>
-    <key>Comment</key><string>Toon quantization levels (integer, recommended 2-16)</string>
-    <key>Persist</key><integer>1</integer>
-    <key>Type</key><string>S32</string>
-    <key>Value</key><integer>4</integer>
-  </map>
-
-  <key>RenderOutlineOpacity</key>
-  <map>
-    <key>Comment</key><string>Outline opacity for toon edges</string>
+    <key>Comment</key><string>White balance color temperature [Kelvin] (recommended 2500-15000, default 6500)</string>
     <key>Persist</key><integer>1</integer>
     <key>Type</key><string>F32</string>
-    <key>Value</key><real>0.9</real>
+    <key>Value</key><real>6500.0</real>
   </map>
 
-  <key>RenderEdgeThreshold</key>
+  <key>RenderWBTint</key>
   <map>
-    <key>Comment</key><string>Edge detection threshold</string>
+    <key>Comment</key><string>White balance tint: -1.0=green .. +1.0=magenta</string>
     <key>Persist</key><integer>1</integer>
     <key>Type</key><string>F32</string>
-    <key>Value</key><real>0.25</real>
+    <key>Value</key><real>0.0</real>
   </map>
+
+  <key>RenderFilmicContrast</key>
+  <map>
+    <key>Comment</key><string>Filmic contrast multiplier (0.90-1.10 typical)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>1.0</real>
+  </map>
+
+  <key>RenderFilmicSaturation</key>
+  <map>
+    <key>Comment</key><string>Filmic saturation multiplier (0.90-1.10 typical)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>1.0</real>
+  </map>
+
 </map>
 </llsd>
