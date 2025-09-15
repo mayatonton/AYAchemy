@@ -343,7 +343,7 @@ width="100">
     layout="topleft"
     left="10"
     name="PrefSaveButton"
-    top="310"
+    top="280"
     width="200">
     <button.commit_callback
       function="Pref.PrefSave"
@@ -385,7 +385,7 @@ width="100">
     layout="topleft"
     left="10"
     name="Defaults"
-    top_delta="65"
+    top_delta="35"
     width="210">
     <button.commit_callback
       function="Pref.HardwareDefaults" />
@@ -404,5 +404,74 @@ width="100">
       function="Pref.Advanced"
       parameter="advanced" />
   </button>
+
+<!-- Shading -->
+<combo_box
+  follows="top|left"
+  layout="topleft"
+  name="shading_mode_combo"
+  label="Shading Mode"
+  control_name="RenderToneMapType"
+  commit_on_selection="true"
+  allow_text_entry="false"
+  top_delta="35"
+  left="10"
+  width="220"
+  height="23">
+  <combo_item name="current_1"  label="* Default"          value="1"/>
+  <combo_item name="current_0"  label="HDR Debug"          value="0"/>
+  <combo_item name="current_2"  label="Uchimura (GT)"      value="2"/>
+  <combo_item name="current_3"  label="AMD LPM"            value="3"/>
+  <combo_item name="current_4"  label="Uncharted (Hable)"  value="4"/>
+  <combo_item name="filmic"     label="Filmic (ACES)"      value="5"/>
+</combo_box>
+
+<!-- Filmic parameters (disabled unless Filmic is selected) -->
+
+<!-- Move exposure_ev to the right of the combo box -->
+<slider follows="top|left" layout="topleft"
+        name="exposure_ev" label="Exposure (EV)"
+        control_name="RenderExposureEV"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="1"
+        min_val="-5.0" max_val="5.0" increment="0.1"
+        top_delta="0" left_pad="25" width="240" height="23"/>
+
+<!-- Place wb_tempk at the old exposure_ev position (first row below combo) -->
+<slider follows="top|left" layout="topleft"
+        name="wb_tempk" label="Temp (K)"
+        control_name="RenderWBTempK"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="0"
+        min_val="2500" max_val="15000" increment="50"
+        top_delta="28" left="10" width="240" height="23"/>
+
+<!-- Place wb_tint where wb_tempk used to be (same row, right column) -->
+<slider follows="top|left" layout="topleft"
+        name="wb_tint" label="WB Tint"
+        control_name="RenderWBTint"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="2"
+        min_val="-1.0" max_val="1.0" increment="0.01"
+        top_delta="0" left_pad="10" width="240" height="23"/>
+
+<!-- Place filmic_contrast on the next row (left column) -->
+<slider follows="top|left" layout="topleft"
+        name="filmic_contrast" label="Contrast"
+        control_name="RenderFilmicContrast"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="2"
+        min_val="0.80" max_val="1.20" increment="0.01"
+        top_delta="28" left="10" width="240" height="23"/>
+
+<!-- Place filmic_saturation to the right of filmic_contrast (same row, right column) -->
+<slider follows="top|left" layout="topleft"
+        name="filmic_saturation" label="Saturation"
+        control_name="RenderFilmicSaturation"
+        enabled_control="RenderFilmicUIEnabled"
+        decimal_digits="2"
+        min_val="0.01" max_val="2.0" increment="0.01"
+        top_delta="0" left_pad="10" width="240" height="23"/>
+<!-- Shading -->
 
 </panel>
