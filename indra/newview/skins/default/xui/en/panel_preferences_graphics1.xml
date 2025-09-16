@@ -427,7 +427,6 @@ width="100">
 </combo_box>
 <button
   name="reset_shading_parameters"
-  enabled_control="RenderFilmicUIEnabled"
   follows="left|top"
   layout="topleft"
   top_delta="0" left_pad="10" height="18" width="18"
@@ -444,7 +443,6 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="exposure_ev" label="Exposure (EV)"
         control_name="RenderExposureEV"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="1"
         min_val="-5.0" max_val="5.0" increment="0.01"
         top_delta="0" left_pad="10" width="230" height="23"/>
@@ -453,7 +451,6 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="wb_tempk" label="Temp (K)"
         control_name="RenderWBTempK"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="0"
         min_val="2500" max_val="15000" increment="50"
         top_delta="28" left="10" width="240" height="23"/>
@@ -462,7 +459,6 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="wb_tint" label="WB Tint"
         control_name="RenderWBTint"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="2"
         min_val="-1.0" max_val="1.0" increment="0.01"
         top_delta="0" left_pad="10" width="240" height="23"/>
@@ -471,7 +467,6 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="filmic_contrast" label="Contrast"
         control_name="RenderFilmicContrast"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="2"
         min_val="0.80" max_val="1.20" increment="0.01"
         top_delta="28" left="10" width="240" height="23"/>
@@ -480,7 +475,6 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="filmic_saturation" label="Saturation"
         control_name="RenderFilmicSaturation"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="2"
         min_val="0.01" max_val="2.0" increment="0.01"
         top_delta="0" left_pad="10" width="240" height="23"/>

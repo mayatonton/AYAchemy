@@ -30,15 +30,15 @@ uniform sampler2D exposureMap;
 uniform float exposure;
 uniform float aces_mix;
 
-// RenderToneMapType: 0=HDR Debug, 1=ACES(Hill), 2=Uchimura, 3=AMD LPM, 4=Uncharted(Hable), 5=Filmic
-uniform int   uToneMapType;
+// Shading mode (Current=0, Filmic=1) - 参照だけ（分岐には使わない）
+uniform int   uShadingMode;
 
-// Filmic 用オプション（ttype==5のときのみ使用）
-uniform float uExposureEV;
-uniform float uWB_TempK;
-uniform float uWB_Tint;
-uniform float uFilmicContrast;
-uniform float uFilmicSaturation;
+// Filmic系オプション（全トーンマッピングタイプで有効）
+uniform float uExposureEV;        // 追加EV
+uniform float uWB_TempK;          // 色温度[K]（0または未指定なら6500）
+uniform float uWB_Tint;           // ティント -1..+1（緑↔マゼンタ）
+uniform float uFilmicContrast;    // 1.0基準の微調整
+uniform float uFilmicSaturation;  // 1.0基準の微調整
 
 vec3 srgb_to_linear(vec3 cl);
 vec3 linear_to_srgb(vec3 cl);
@@ -121,7 +121,6 @@ vec3 Uncharted2Tonemap(vec3 x)
     float D = tone_uncharted_b.x;
     float E = tone_uncharted_b.y;
     float F = tone_uncharted_b.z;
-
     return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
 }
 vec3 uncharted2(vec3 col)
@@ -129,7 +128,7 @@ vec3 uncharted2(vec3 col)
     return Uncharted2Tonemap(col)/Uncharted2Tonemap(vec3(tone_uncharted_c.x));
 }
 
-// -------------------- Filmic 補助 --------------------
+// -------------------- Filmic補助（共通適用） --------------------
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 vec3 ACES_Fitted(vec3 c)
 {
@@ -138,6 +137,8 @@ vec3 ACES_Fitted(vec3 c)
     c = ACESOutputMat * c;
     return clamp(c, 0.0, 1.0);
 }
+
+// 簡易ホワイトバランス（色温度/ティント）
 vec3 whiteBalanceGains(float tempK, float tint)
 {
     float t = clamp((tempK - 6500.0) / 1000.0, -6.0, 6.0);
@@ -177,40 +178,35 @@ void main()
     diff.rgb *= exposure * exp_scale;
 #endif
 
-    // Filmic: RenderToneMapType==5 のときのみ実行（他タイプは既存のTONEMAP_METHODへ）
-    if (uToneMapType == 5)
+    // 追加EV（全方式に適用）
+    if (uExposureEV != 0.0)
     {
-        if (uExposureEV != 0.0)
-        {
-            diff.rgb *= exp2(uExposureEV);
-        }
-
-        float tempK = (uWB_TempK > 0.0) ? uWB_TempK : 6500.0;
-        float tint  = uWB_Tint;
-        float contr = (uFilmicContrast > 0.0) ? uFilmicContrast : 1.0;
-        float sat   = (uFilmicSaturation > 0.0) ? uFilmicSaturation : 1.0;
-
-        vec3 c = applyWhiteBalance(diff.rgb, tempK, tint);
-        c = ACES_Fitted(c);
-        c = desaturateHighlights(c);
-        c = adjustContrastSaturation(c, contr, sat);
-
-        diff.rgb = clamp(c, 0.0, 1.0);
-        frag_color = diff;
-        return;
+        diff.rgb *= exp2(uExposureEV);
     }
 
-    // ───────── 既存トーンマップ（プログラムのTONEMAP_METHODで決定）─────────
-#if TONEMAP_METHOD == 1 // Aces Hill method
+    // ホワイトバランス（全方式でトーンマップ前に適用）
+    float tempK = (uWB_TempK > 0.0) ? uWB_TempK : 6500.0;
+    diff.rgb = applyWhiteBalance(diff.rgb, tempK, uWB_Tint);
+
+    // 選択されたトーンマッピング方式（RenderToneMapType に応じて異なるプログラムでコンパイルされる）
+#if TONEMAP_METHOD == 1 // ACES Hill method
     diff.rgb = mix(ACES_Hill(diff.rgb), diff.rgb, aces_mix);
 #elif TONEMAP_METHOD == 2 // Uchimura's Gran Turismo method
     diff.rgb = uchimura(diff.rgb);
-#elif TONEMAP_METHOD == 3 // AMD Tonemapper
+#elif TONEMAP_METHOD == 3 // AMD Tonemapper (LPM)
     RunLPMFilter(diff.rgb);
-#elif TONEMAP_METHOD == 4 // Uncharted
+#elif TONEMAP_METHOD == 4 // Uncharted (Hable)
     diff.rgb = uncharted2(diff.rgb);
+#else
+    // TONEMAP_METHOD == 0 (HDR Debug) などはここでそのまま通す
 #endif
 
-    diff.rgb = clamp(diff.rgb, 0.0, 1.0);
+    // ハイライトの軽い脱彩 → コントラスト/彩度微調整（全方式に適用）
+    vec3 c = desaturateHighlights(diff.rgb);
+    float contr = (uFilmicContrast > 0.0) ? uFilmicContrast : 1.0;
+    float sat   = (uFilmicSaturation > 0.0) ? uFilmicSaturation : 1.0;
+    c = adjustContrastSaturation(c, contr, sat);
+
+    diff.rgb = clamp(c, 0.0, 1.0);
     frag_color = diff;
 }
