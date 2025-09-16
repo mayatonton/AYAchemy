@@ -51,9 +51,11 @@ public:
         TONEMAP_UCHIMURA,
         TONEMAP_AMD,
         TONEMAP_UNCHARTED,
+        TONEMAP_FILMIC,
         TONEMAP_COUNT
     };
     bool setupTonemap();
+    void updateFilmicUIEnabled();
     void renderTonemap(LLRenderTarget* src, LLRenderTarget* exposure, LLRenderTarget* dst);
 
     bool setupColorGrade();
