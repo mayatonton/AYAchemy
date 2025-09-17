@@ -419,12 +419,25 @@ width="100">
   width="220"
   height="23">
   <combo_item name="current_1"  label="* Default"          value="1"/>
-  <combo_item name="current_0"  label="HDR Debug"          value="0"/>
+  <!-- <combo_item name="current_0"  label="HDR Debug"          value="0"/> -->
   <combo_item name="current_2"  label="Uchimura (GT)"      value="2"/>
   <combo_item name="current_3"  label="AMD LPM"            value="3"/>
   <combo_item name="current_4"  label="Uncharted (Hable)"  value="4"/>
-  <combo_item name="filmic"     label="Filmic (ACES)"      value="5"/>
+  <combo_item name="filmic"     label="Filmic (Hable)"     value="5"/>
+  <combo_item name="filmic"     label="Filmic (ACES)"      value="6"/>
+  <!-- <combo_item name="pbrlike"    label="PBR (Unify Legacy)" value="7"/> -->
 </combo_box>
+<button
+  name="reset_shading_parameters"
+  follows="left|top"
+  layout="topleft"
+  top_delta="0" left_pad="10" height="18" width="18"
+  image_overlay="Refresh_Off"
+  tool_tip="Reset parameters"
+  image_overlay_alignment="center">
+  <button.commit_callback function="Pref.ResetControlsDefault"
+    parameter="RenderExposureEV, RenderWBTempK, RenderWBTint, RenderFilmicContrast, RenderFilmicSaturation"/>
+</button>
 
 <!-- Filmic parameters (disabled unless Filmic is selected) -->
 
@@ -432,16 +445,14 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="exposure_ev" label="Exposure (EV)"
         control_name="RenderExposureEV"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="1"
-        min_val="-5.0" max_val="5.0" increment="0.1"
-        top_delta="0" left_pad="25" width="240" height="23"/>
+        min_val="-5.0" max_val="5.0" increment="0.01"
+        top_delta="0" left_pad="10" width="230" height="23"/>
 
 <!-- Place wb_tempk at the old exposure_ev position (first row below combo) -->
 <slider follows="top|left" layout="topleft"
         name="wb_tempk" label="Temp (K)"
         control_name="RenderWBTempK"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="0"
         min_val="2500" max_val="15000" increment="50"
         top_delta="28" left="10" width="240" height="23"/>
@@ -450,7 +461,6 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="wb_tint" label="WB Tint"
         control_name="RenderWBTint"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="2"
         min_val="-1.0" max_val="1.0" increment="0.01"
         top_delta="0" left_pad="10" width="240" height="23"/>
@@ -459,7 +469,6 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="filmic_contrast" label="Contrast"
         control_name="RenderFilmicContrast"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="2"
         min_val="0.80" max_val="1.20" increment="0.01"
         top_delta="28" left="10" width="240" height="23"/>
@@ -468,7 +477,6 @@ width="100">
 <slider follows="top|left" layout="topleft"
         name="filmic_saturation" label="Saturation"
         control_name="RenderFilmicSaturation"
-        enabled_control="RenderFilmicUIEnabled"
         decimal_digits="2"
         min_val="0.01" max_val="2.0" increment="0.01"
         top_delta="0" left_pad="10" width="240" height="23"/>

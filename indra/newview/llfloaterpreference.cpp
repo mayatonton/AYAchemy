@@ -388,6 +388,29 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
                 controlp->resetToDefault(true);
             }
         });
+    mCommitCallbackRegistrar.add("Pref.ResetControlsDefault", [](LLUICtrl* /*ctrl*/, const LLSD& userdata)
+        {
+            std::string list = userdata.asString();
+            if (list.empty()) return;
+            std::stringstream ss(list);
+            std::string token;
+            while (std::getline(ss, token, ','))
+            {
+                LLStringUtil::trim(token);          // 前後の空白を削る（llstring.h）
+                if (token.empty()) continue;
+
+                if (LLControlVariable* cv = gSavedSettings.getControl(token))
+                {
+                    cv->resetToDefault(true);       // true: シグナル発火してUIへ反映
+                    // もしくは: gSavedSettings.setToDefault(token);
+                }
+                else
+                {
+                    LL_WARNS() << "Pref.ResetControlsDefault: unknown setting '" << token << "'" << LL_ENDL;
+                }
+            }
+        });
+
 }
 
 void LLFloaterPreference::processProperties( void* pData, EAvatarProcessorType type )

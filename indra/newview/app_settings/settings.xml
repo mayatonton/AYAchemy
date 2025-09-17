@@ -16346,5 +16346,37 @@
     <key>Value</key><real>1.0</real>
   </map>
 
+  <key>RenderFilmicAmount</key>
+  <map>
+    <key>Comment</key><string>Strength of Filmic grade (0..1)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>0.7</real>
+  </map>
+
+  <key>RenderFilmicShadowLift</key>
+  <map>
+    <key>Comment</key><string>Shadow lift amount (0..0.2)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>0.06</real>
+  </map>
+
+  <key>RenderFilmicHighlightDesat</key>
+  <map>
+    <key>Comment</key><string>Highlight desaturation amount (0..1)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>0.5</real>
+  </map>
+
+  <key>RenderFilmicTealOrange</key>
+  <map>
+    <key>Comment</key><string>Teal &amp; Orange split-toning amount (0..1)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>0.2</real>
+  </map>
+
 </map>
 </llsd>
