@@ -185,6 +185,14 @@ void LutCube::writeColor(int x, int y, int z, unsigned char r, unsigned char g, 
 }
 
 // ---------------------------------------------------------------
+/* ユーティリティ: モード番号→有効範囲 clamp（1..6）*/
+static U32 tm_clamp(U32 t) { return llclamp(t, (U32)1, (U32)6); }
+
+/* モード別キー名の生成 */
+static std::string tm_key(const std::string& base, U32 t)
+{
+    return llformat("%s_TM%u", base.c_str(), tm_clamp(t));
+}
 
 ALRenderUtil::ALRenderUtil()
 {
@@ -219,6 +227,16 @@ ALRenderUtil::ALRenderUtil()
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenDLSSharpness")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenDLSDenoise")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenCASSharpness")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
+
+    /* モード変更 → モード別→共通 読み込み */
+    mSettingConnections.push_back(gSavedSettings.getControl("RenderToneMapType")->getSignal()->connect(boost::bind(&ALRenderUtil::loadToneMapParamsFromMode, this)));
+    /* 各スライダー変更 → 共通→モード 切り出し */
+    auto bind_save = boost::bind(&ALRenderUtil::saveToneMapParamsToMode, this);
+    mSettingConnections.push_back(gSavedSettings.getControl("RenderExposureEV")->getSignal()->connect(bind_save));
+    mSettingConnections.push_back(gSavedSettings.getControl("RenderWBTempK")->getSignal()->connect(bind_save));
+    mSettingConnections.push_back(gSavedSettings.getControl("RenderWBTint")->getSignal()->connect(bind_save));
+    mSettingConnections.push_back(gSavedSettings.getControl("RenderFilmicContrast")->getSignal()->connect(bind_save));
+    mSettingConnections.push_back(gSavedSettings.getControl("RenderFilmicSaturation")->getSignal()->connect(bind_save));
 }
 
 ALRenderUtil::~ALRenderUtil()
@@ -240,6 +258,76 @@ void ALRenderUtil::refreshState()
     setupTonemap();
     setupColorGrade();
     setupSharpen();
+    loadToneMapParamsFromMode();
+}
+
+void ALRenderUtil::loadToneMapParamsFromMode()
+{
+    if (mTMParamSyncing) return;
+    mTMParamSyncing = true;
+
+    U32 t = tm_clamp(gSavedSettings.getU32("RenderToneMapType"));
+
+    auto copyF32 = [&](const char* base)
+    {
+        std::string src = tm_key(base, t);
+        if (gSavedSettings.controlExists(src))
+            gSavedSettings.setF32(base, gSavedSettings.getF32(src));
+    };
+
+    copyF32("RenderExposureEV");
+    copyF32("RenderWBTempK");
+    copyF32("RenderWBTint");
+    copyF32("RenderFilmicContrast");
+    copyF32("RenderFilmicSaturation");
+
+    mTMParamSyncing = false;
+}
+
+void ALRenderUtil::saveToneMapParamsToMode()
+{
+    if (mTMParamSyncing) return;
+    mTMParamSyncing = true;
+
+    U32 t = tm_clamp(gSavedSettings.getU32("RenderToneMapType"));
+
+    auto saveF32 = [&](const char* base)
+    {
+        std::string dst = tm_key(base, t);
+        if (gSavedSettings.controlExists(dst))
+            gSavedSettings.setF32(dst, gSavedSettings.getF32(base));
+    };
+
+    saveF32("RenderExposureEV");
+    saveF32("RenderWBTempK");
+    saveF32("RenderWBTint");
+    saveF32("RenderFilmicContrast");
+    saveF32("RenderFilmicSaturation");
+
+    mTMParamSyncing = false;
+}
+
+void ALRenderUtil::resetToneMapParamsCurrent()
+{
+    U32 t = tm_clamp(gSavedSettings.getU32("RenderToneMapType"));
+
+    auto resetOne = [&](const char* base)
+    {
+        std::string key = tm_key(base, t);
+        if (LLControlVariable* cv = gSavedSettings.getControl(key))
+        {
+            cv->setValue(cv->getDefault()); // モード別キーをデフォルトに
+        }
+    };
+
+    resetOne("RenderExposureEV");
+    resetOne("RenderWBTempK");
+    resetOne("RenderWBTint");
+    resetOne("RenderFilmicContrast");
+    resetOne("RenderFilmicSaturation");
+
+    // モード→共通へ読み込んでUIへ反映
+    loadToneMapParamsFromMode();
 }
 
 bool ALRenderUtil::setupTonemap()

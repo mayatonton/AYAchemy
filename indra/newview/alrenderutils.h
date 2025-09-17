@@ -77,6 +77,10 @@ public:
 
     U32 getSharpenMethod() { return mSharpenMethod; };
 
+    void loadToneMapParamsFromMode();
+    void saveToneMapParamsToMode();
+    void resetToneMapParamsCurrent();
+
 private:
     // State
     U32 mTonemapType = ALTonemap::TONEMAP_NONE;
@@ -87,4 +91,6 @@ private:
     LLVector4 mCGLutSize;
 
     std::vector<boost::signals2::scoped_connection> mSettingConnections;
+
+    bool mTMParamSyncing = false;
 };

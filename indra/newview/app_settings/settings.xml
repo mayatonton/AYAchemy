@@ -16378,5 +16378,75 @@
     <key>Value</key><real>0.2</real>
   </map>
 
+<!-- Mode-scoped storages: 1=ACES(Default), 2=Uchimura, 3=AMD LPM, 4=Uncharted(Hable), 5=Filmic(Hable), 6=Filmic(ACES) -->
+
+  <key>RenderExposureEV_TM1</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderExposureEV_TM2</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderExposureEV_TM3</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderExposureEV_TM4</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderExposureEV_TM5</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderExposureEV_TM6</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+
+  <key>RenderWBTempK_TM1</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>6500.0</real></map>
+  <key>RenderWBTempK_TM2</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>6500.0</real></map>
+  <key>RenderWBTempK_TM3</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>6500.0</real></map>
+  <key>RenderWBTempK_TM4</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>6500.0</real></map>
+  <key>RenderWBTempK_TM5</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>6500.0</real></map>
+  <key>RenderWBTempK_TM6</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>6500.0</real></map>
+
+  <key>RenderWBTint_TM1</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderWBTint_TM2</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderWBTint_TM3</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderWBTint_TM4</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderWBTint_TM5</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+  <key>RenderWBTint_TM6</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>0.0</real></map>
+
+  <key>RenderFilmicContrast_TM1</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicContrast_TM2</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicContrast_TM3</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicContrast_TM4</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicContrast_TM5</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicContrast_TM6</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+
+  <key>RenderFilmicSaturation_TM1</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicSaturation_TM2</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicSaturation_TM3</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicSaturation_TM4</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicSaturation_TM5</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+  <key>RenderFilmicSaturation_TM6</key>
+  <map><key>Type</key><string>F32</string><key>Persist</key><integer>1</integer><key>Value</key><real>1.0</real></map>
+
+  <key>RenderShaderSalt</key>
+  <map><key>Type</key><string>S32</string><key>Persist</key><integer>1</integer><key>Value</key><integer>0</integer></map>
+
 </map>
 </llsd>
