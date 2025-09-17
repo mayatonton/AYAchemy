@@ -303,6 +303,21 @@ LLKeybindingHandler gKeybindHandler;
 // static
 std::string LLFloaterPreference::sSkin = "";
 
+/* ヘルパー: 現在のToneMapTypeを 1..6 にクランプ */
+static U32 tm_clamp_cur()
+{
+    U32 t = gSavedSettings.getU32("RenderToneMapType");
+    if (t < 1) t = 1;
+    if (t > 6) t = 6;
+    return t;
+}
+
+/* ヘルパー: "BaseKey" と モード番号 t から "BaseKey_TM<t>" を作る */
+static std::string tm_key_of(const std::string& base, U32 t)
+{
+    return llformat("%s_TM%u", base.c_str(), t);
+}
+
 LLFloaterPreference::LLFloaterPreference(const LLSD& key)
     : LLFloater(key),
     mGotPersonalInfo(false),
@@ -388,29 +403,108 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
                 controlp->resetToDefault(true);
             }
         });
-    mCommitCallbackRegistrar.add("Pref.ResetControlsDefault", [](LLUICtrl* /*ctrl*/, const LLSD& userdata)
+
+    /* Pref.LoadToneParamsFromMode
+    parameter: "RenderExposureEV, RenderWBTempK, RenderWBTint, RenderFilmicContrast, RenderFilmicSaturation"
+    動作: 現在モードの TMキー → 共通キー へコピー（UIに反映） */
+    mCommitCallbackRegistrar.add("Pref.LoadToneParamsFromMode", [](LLUICtrl* /*ctrl*/, const LLSD& userdata)
         {
             std::string list = userdata.asString();
             if (list.empty()) return;
-            std::stringstream ss(list);
-            std::string token;
-            while (std::getline(ss, token, ','))
-            {
-                LLStringUtil::trim(token);          // 前後の空白を削る（llstring.h）
-                if (token.empty()) continue;
 
-                if (LLControlVariable* cv = gSavedSettings.getControl(token))
+            U32 t = tm_clamp_cur();
+
+            std::stringstream ss(list);
+            std::string base;
+            while (std::getline(ss, base, ','))
+            {
+                LLStringUtil::trim(base);
+                if (base.empty()) continue;
+
+                std::string tmkey = tm_key_of(base, t);
+
+                if (LLControlVariable* cv_tm = gSavedSettings.getControl(tmkey))
                 {
-                    cv->resetToDefault(true);       // true: シグナル発火してUIへ反映
-                    // もしくは: gSavedSettings.setToDefault(token);
+                    LLSD v = cv_tm->get(); // TM側の現在値（起動直後はデフォルト）
+                    if (LLControlVariable* cv_base = gSavedSettings.getControl(base))
+                    {
+                        // 共通キーへコピー（true=シグナル発火→スライダー反映）
+                        cv_base->setValue(v, true);
+                    }
                 }
                 else
                 {
-                    LL_WARNS() << "Pref.ResetControlsDefault: unknown setting '" << token << "'" << LL_ENDL;
+                    LL_WARNS() << "Pref.LoadToneParamsFromMode: unknown TM key '" << tmkey << "'" << LL_ENDL;
                 }
             }
         });
 
+    /* Pref.SaveToneParamToMode
+    parameter: "BaseKey"（単体）
+    動作: 共通キー → 現在モードの TMキー へ保存（将来の読込/リセット用） */
+    mCommitCallbackRegistrar.add("Pref.SaveToneParamToMode", [](LLUICtrl* /*ctrl*/, const LLSD& userdata)
+        {
+            std::string base = userdata.asString();
+            LLStringUtil::trim(base);
+            if (base.empty()) return;
+
+            U32 t = tm_clamp_cur();
+            std::string tmkey = tm_key_of(base, t);
+
+            if (LLControlVariable* cv_base = gSavedSettings.getControl(base))
+            {
+                LLSD v = cv_base->get();
+                if (LLControlVariable* cv_tm = gSavedSettings.getControl(tmkey))
+                {
+                    // TM側に保存（true=シグナル発火、ただしUIに直接は繋がっていないので影響なし）
+                    cv_tm->setValue(v, true);
+                }
+                else
+                {
+                    LL_WARNS() << "Pref.SaveToneParamToMode: unknown TM key '" << tmkey << "'" << LL_ENDL;
+                }
+            }
+            else
+            {
+                LL_WARNS() << "Pref.SaveToneParamToMode: unknown base key '" << base << "'" << LL_ENDL;
+            }
+        });
+
+    /* Pref.ResetToneMapCurrent
+    parameter: "RenderExposureEV, RenderWBTempK, RenderWBTint, RenderFilmicContrast, RenderFilmicSaturation"
+    動作: 現在モードの TMキーをデフォルトへリセット → その値で共通キーを上書き（UI反映） */
+    mCommitCallbackRegistrar.add("Pref.ResetToneMapCurrent", [](LLUICtrl* /*ctrl*/, const LLSD& userdata)
+        {
+            std::string list = userdata.asString();
+            if (list.empty()) return;
+
+            U32 t = tm_clamp_cur();
+
+            std::stringstream ss(list);
+            std::string base;
+            while (std::getline(ss, base, ','))
+            {
+                LLStringUtil::trim(base);
+                if (base.empty()) continue;
+
+                std::string tmkey = tm_key_of(base, t);
+                if (LLControlVariable* cv_tm = gSavedSettings.getControl(tmkey))
+                {
+                    // TMキーをデフォルトへ（true=シグナル発火）
+                    cv_tm->resetToDefault(true);
+
+                    // 直後のTM値を共通キーへコピー（UI反映）
+                    if (LLControlVariable* cv_base = gSavedSettings.getControl(base))
+                    {
+                        cv_base->setValue(cv_tm->get(), true);
+                    }
+                }
+                else
+                {
+                    LL_WARNS() << "Pref.ResetToneMapCurrent: unknown TM key '" << tmkey << "'" << LL_ENDL;
+                }
+            }
+        });
 }
 
 void LLFloaterPreference::processProperties( void* pData, EAvatarProcessorType type )
