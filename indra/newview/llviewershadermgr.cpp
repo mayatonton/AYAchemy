@@ -243,6 +243,27 @@ LLGLSLShader            gDeferredPBRAlphaProgram;
 LLGLSLShader            gDeferredSkinnedPBRAlphaProgram;
 LLGLSLShader            gDeferredPBRTerrainProgram;
 
+static inline std::string get_shader_build_tag_simple()
+{
+    // ビルド（コンパイル）日時でユニーク化
+    return llformat("B-%s-%s", __DATE__, __TIME__);
+}
+
+static inline std::string get_shader_dev_salt()
+{
+    // Debug Settings から任意に上げられるソルト（開発中に即時再コンパイルしたい時用）
+    // settings.xml に RenderShaderSalt (S32) を追加してください（初期値0でOK）
+    S32 salt = gSavedSettings.getS32("RenderShaderSalt");
+    return llformat("%d", salt);
+}
+
+static inline void add_tonemap_build_tags(LLGLSLShader& prog)
+{
+    prog.addPermutation("BUILD_TAG",      get_shader_build_tag_simple());
+    prog.addPermutation("DEV_SALT",       get_shader_dev_salt());
+    // 必要なら他のタグも追加可能
+}
+
 //helper for making a rigged variant of a given shader
 static bool make_rigged_variant(LLGLSLShader& shader, LLGLSLShader& riggedShader)
 {
@@ -2577,6 +2598,7 @@ BOOL LLViewerShaderMgr::loadShadersDeferred()
         gDeferredPostTonemapProgram.mShaderFiles.push_back(make_pair("alchemy/toneMapF.glsl", GL_FRAGMENT_SHADER));
         gDeferredPostTonemapProgram.mShaderLevel = mShaderLevel[SHADER_DEFERRED];
         gDeferredPostTonemapProgram.clearPermutations();
+        add_tonemap_build_tags(gDeferredPostTonemapProgram);
         gDeferredPostTonemapProgram.addPermutation("TONEMAP_METHOD", std::to_string(ALRenderUtil::TONEMAP_NONE));
         success = gDeferredPostTonemapProgram.createShader(NULL, NULL);
     }
@@ -2590,6 +2612,7 @@ BOOL LLViewerShaderMgr::loadShadersDeferred()
         gDeferredPostTonemapACESProgram.mShaderFiles.push_back(make_pair("alchemy/toneMapF.glsl", GL_FRAGMENT_SHADER));
         gDeferredPostTonemapACESProgram.mShaderLevel = mShaderLevel[SHADER_DEFERRED];
         gDeferredPostTonemapACESProgram.clearPermutations();
+        add_tonemap_build_tags(gDeferredPostTonemapACESProgram);
         gDeferredPostTonemapACESProgram.addPermutation("TONEMAP_METHOD", std::to_string(ALRenderUtil::TONEMAP_ACES_HILL));
         success = gDeferredPostTonemapACESProgram.createShader(NULL, NULL);
     }
@@ -2603,6 +2626,7 @@ BOOL LLViewerShaderMgr::loadShadersDeferred()
         gDeferredPostTonemapUchiProgram.mShaderFiles.push_back(make_pair("alchemy/toneMapF.glsl", GL_FRAGMENT_SHADER));
         gDeferredPostTonemapUchiProgram.mShaderLevel = mShaderLevel[SHADER_DEFERRED];
         gDeferredPostTonemapUchiProgram.clearPermutations();
+        add_tonemap_build_tags(gDeferredPostTonemapUchiProgram);
         gDeferredPostTonemapUchiProgram.addPermutation("TONEMAP_METHOD", std::to_string(ALRenderUtil::TONEMAP_UCHIMURA));
         success = gDeferredPostTonemapUchiProgram.createShader(NULL, NULL);
     }
@@ -2616,6 +2640,7 @@ BOOL LLViewerShaderMgr::loadShadersDeferred()
         gDeferredPostTonemapHableProgram.mShaderFiles.push_back(make_pair("alchemy/toneMapF.glsl", GL_FRAGMENT_SHADER));
         gDeferredPostTonemapHableProgram.mShaderLevel = mShaderLevel[SHADER_DEFERRED];
         gDeferredPostTonemapHableProgram.clearPermutations();
+        add_tonemap_build_tags(gDeferredPostTonemapHableProgram);
         gDeferredPostTonemapHableProgram.addPermutation("TONEMAP_METHOD", std::to_string(ALRenderUtil::TONEMAP_UNCHARTED));
         success = gDeferredPostTonemapHableProgram.createShader(NULL, NULL);
     }
@@ -2751,6 +2776,7 @@ BOOL LLViewerShaderMgr::loadShadersDeferred()
             gDeferredPostTonemapLPMProgram.mShaderFiles.push_back(make_pair("alchemy/LPMUtil.glsl", GL_FRAGMENT_SHADER));
             gDeferredPostTonemapLPMProgram.mShaderLevel = mShaderLevel[SHADER_DEFERRED];
             gDeferredPostTonemapLPMProgram.clearPermutations();
+            add_tonemap_build_tags(gDeferredPostTonemapLPMProgram);
             gDeferredPostTonemapLPMProgram.addPermutation("TONEMAP_METHOD", std::to_string(ALRenderUtil::TONEMAP_AMD));
             gDeferredPostTonemapLPMProgram.createShader(NULL, NULL); // Ignore return value for this shader
         }

@@ -30,15 +30,19 @@ uniform sampler2D exposureMap;
 uniform float exposure;
 uniform float aces_mix;
 
-// Shading mode (Current=0, Filmic=1) - 参照だけ（分岐には使わない）
 uniform int   uShadingMode;
 
 // Filmic系オプション（全トーンマッピングタイプで有効）
-uniform float uExposureEV;        // 追加EV
-uniform float uWB_TempK;          // 色温度[K]（0または未指定なら6500）
-uniform float uWB_Tint;           // ティント -1..+1（緑↔マゼンタ）
-uniform float uFilmicContrast;    // 1.0基準の微調整
-uniform float uFilmicSaturation;  // 1.0基準の微調整
+uniform int   uToneMapType;       // 0..6 （Filmic=5）
+uniform float uExposureEV;
+uniform float uWB_TempK;
+uniform float uWB_Tint;
+uniform float uFilmicContrast;
+uniform float uFilmicSaturation;
+uniform float uFilmicAmount;      // 0..1
+uniform float uFilmicShadowLift;  // 0..0.2 目安
+uniform float uFilmicHighlightDesat; // 0..1
+uniform float uFilmicTealOrange;  // 0..1
 
 vec3 srgb_to_linear(vec3 cl);
 vec3 linear_to_srgb(vec3 cl);
@@ -130,6 +134,55 @@ vec3 uncharted2(vec3 col)
 
 // -------------------- Filmic補助（共通適用） --------------------
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+
+// シャドウ持ち上げ（低輝度をsoftに持ち上げる）
+vec3 liftShadows(vec3 c, float lift)
+{
+    // 低輝度ほど持ち上がる形：c + lift*(1 - c) に重み
+    float L = luma(c);
+    float f = smoothstep(0.0, 0.5, 1.0 - L); // シャドウ領域で1に近い
+    return mix(c, c + lift * (1.0 - c), f);
+}
+
+// ハイライトロールオフ（肩を丸める）
+vec3 rolloffHighlights(vec3 c)
+{
+    float L = luma(c);
+    // 0.6以上で徐々に圧縮
+    float t = smoothstep(0.6, 1.0, L);
+    // ロールオフカーブ：上に行くほど抑える
+    vec3 r = 1.0 - (1.0 - c) * (1.0 - 0.3 * t);
+    return mix(c, r, t);
+}
+
+// ハイライト脱彩
+vec3 desaturateHL(vec3 c, float amount)
+{
+    float L = luma(c);
+    float t = smoothstep(0.6, 1.0, L);
+    vec3 grey = vec3(L);
+    return mix(c, mix(c, grey, amount), t);
+}
+
+// ティール＆オレンジのスプリットトーニング
+vec3 tealOrange(vec3 c, float amount)
+{
+    float L = luma(c);
+    vec3 shadowTint    = vec3(0.95, 1.03, 1.08); // やや青緑
+    vec3 highlightTint = vec3(1.08, 1.02, 0.95); // やや橙
+    float t = smoothstep(0.25, 0.85, L);
+    vec3 tinted = c * mix(shadowTint, highlightTint, t);
+    return mix(c, tinted, amount);
+}
+
+// コントラスト/彩度（相対）
+vec3 contrastSaturation(vec3 c, float contrast, float saturation)
+{
+    c = (c - 0.5) * contrast + 0.5;
+    float L = luma(c);
+    return mix(vec3(L), c, saturation);
+}
+
 vec3 ACES_Fitted(vec3 c)
 {
     c = ACESInputMat * c;
@@ -178,35 +231,48 @@ void main()
     diff.rgb *= exposure * exp_scale;
 #endif
 
-    // 追加EV（全方式に適用）
+    // EV（全方式）
     if (uExposureEV != 0.0)
     {
         diff.rgb *= exp2(uExposureEV);
     }
 
-    // ホワイトバランス（全方式でトーンマップ前に適用）
+    // WB（全方式、トーンマップ前）
     float tempK = (uWB_TempK > 0.0) ? uWB_TempK : 6500.0;
     diff.rgb = applyWhiteBalance(diff.rgb, tempK, uWB_Tint);
 
-    // 選択されたトーンマッピング方式（RenderToneMapType に応じて異なるプログラムでコンパイルされる）
-#if TONEMAP_METHOD == 1 // ACES Hill method
+    // 方式別トーンマップ（プログラム切替はC++側の選択に依存）
+#if TONEMAP_METHOD == 1 // ACES Hill
     diff.rgb = mix(ACES_Hill(diff.rgb), diff.rgb, aces_mix);
-#elif TONEMAP_METHOD == 2 // Uchimura's Gran Turismo method
+#elif TONEMAP_METHOD == 2 // Uchimura
     diff.rgb = uchimura(diff.rgb);
-#elif TONEMAP_METHOD == 3 // AMD Tonemapper (LPM)
+#elif TONEMAP_METHOD == 3 // AMD LPM
     RunLPMFilter(diff.rgb);
-#elif TONEMAP_METHOD == 4 // Uncharted (Hable)
+#elif TONEMAP_METHOD == 4 // Uncharted(Hable)
     diff.rgb = uncharted2(diff.rgb);
 #else
-    // TONEMAP_METHOD == 0 (HDR Debug) などはここでそのまま通す
+    // TONEMAP_METHOD == 0 (HDR Debug) など
 #endif
 
-    // ハイライトの軽い脱彩 → コントラスト/彩度微調整（全方式に適用）
-    vec3 c = desaturateHighlights(diff.rgb);
-    float contr = (uFilmicContrast > 0.0) ? uFilmicContrast : 1.0;
-    float sat   = (uFilmicSaturation > 0.0) ? uFilmicSaturation : 1.0;
-    c = adjustContrastSaturation(c, contr, sat);
+    // フィニッシュ（Filmic=5 のときだけ適用して差を明確化）
+    if (uToneMapType == 5)
+    {
+        vec3 base = diff.rgb;
 
-    diff.rgb = clamp(c, 0.0, 1.0);
+        // 1) シャドウ持ち上げ → 2) ハイライトロールオフ → 3) ハイライト脱彩 → 4) ティール＆オレンジ → 5) コントラスト/彩度
+        vec3 c1 = liftShadows(base, uFilmicShadowLift);
+        vec3 c2 = rolloffHighlights(c1);
+        vec3 c3 = desaturateHL(c2, uFilmicHighlightDesat);
+        vec3 c4 = tealOrange(c3, uFilmicTealOrange);
+
+        float contr = (uFilmicContrast > 0.0) ? uFilmicContrast : 1.0;
+        float sat   = (uFilmicSaturation > 0.0) ? uFilmicSaturation : 1.0;
+        vec3  c5    = contrastSaturation(c4, contr, sat);
+
+        // 強度ブレンド
+        diff.rgb = mix(base, c5, clamp(uFilmicAmount, 0.0, 1.0));
+    }
+
+    diff.rgb = clamp(diff.rgb, 0.0, 1.0);
     frag_color = diff;
 }

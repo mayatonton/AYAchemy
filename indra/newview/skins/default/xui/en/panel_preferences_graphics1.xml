@@ -419,11 +419,12 @@ width="100">
   width="220"
   height="23">
   <combo_item name="current_1"  label="* Default"          value="1"/>
-  <combo_item name="current_0"  label="HDR Debug"          value="0"/>
+  <!-- <combo_item name="current_0"  label="HDR Debug"          value="0"/> -->
   <combo_item name="current_2"  label="Uchimura (GT)"      value="2"/>
   <combo_item name="current_3"  label="AMD LPM"            value="3"/>
   <combo_item name="current_4"  label="Uncharted (Hable)"  value="4"/>
-  <combo_item name="filmic"     label="Filmic (ACES)"      value="5"/>
+  <combo_item name="filmic"     label="Filmic"      value="5"/>
+  <!-- <combo_item name="pbrlike"    label="PBR (Unify Legacy)" value="6"/> -->
 </combo_box>
 <button
   name="reset_shading_parameters"
@@ -434,7 +435,7 @@ width="100">
   tool_tip="Reset parameters"
   image_overlay_alignment="center">
   <button.commit_callback function="Pref.ResetControlsDefault"
-    parameter="RenderExposureEV, RenderFilmicUIEnabled, RenderWBTint, RenderFilmicContrast, RenderFilmicSaturation"/>
+    parameter="RenderExposureEV, RenderWBTempK, RenderWBTint, RenderFilmicContrast, RenderFilmicSaturation"/>
 </button>
 
 <!-- Filmic parameters (disabled unless Filmic is selected) -->

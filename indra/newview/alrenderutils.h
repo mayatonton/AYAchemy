@@ -52,10 +52,11 @@ public:
         TONEMAP_AMD,
         TONEMAP_UNCHARTED,
         TONEMAP_FILMIC,
+        TONEMAP_PBR,
         TONEMAP_COUNT
     };
     bool setupTonemap();
-    void updateFilmicUIEnabled();
+    // void updateFilmicUIEnabled();
     void renderTonemap(LLRenderTarget* src, LLRenderTarget* exposure, LLRenderTarget* dst);
 
     bool setupColorGrade();
