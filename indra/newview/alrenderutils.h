@@ -51,7 +51,8 @@ public:
         TONEMAP_UCHIMURA,
         TONEMAP_AMD,
         TONEMAP_UNCHARTED,
-        TONEMAP_FILMIC,
+        TONEMAP_FILMIC_UNCHARTED,
+        TONEMAP_FILMIC_ACES,
         TONEMAP_PBR,
         TONEMAP_COUNT
     };

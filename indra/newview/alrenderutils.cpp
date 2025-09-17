@@ -219,7 +219,6 @@ ALRenderUtil::ALRenderUtil()
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenDLSSharpness")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenDLSDenoise")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
     mSettingConnections.push_back(gSavedSettings.getControl("RenderSharpenCASSharpness")->getSignal()->connect(boost::bind(&ALRenderUtil::setupSharpen, this)));
-    // mSettingConnections.push_back(gSavedSettings.getControl("RenderToneMapType")->getSignal()->connect(boost::bind(&ALRenderUtil::updateFilmicUIEnabled, this)));
 }
 
 ALRenderUtil::~ALRenderUtil()
@@ -241,7 +240,6 @@ void ALRenderUtil::refreshState()
     setupTonemap();
     setupColorGrade();
     setupSharpen();
-    // updateFilmicUIEnabled();
 }
 
 bool ALRenderUtil::setupTonemap()
@@ -262,12 +260,13 @@ bool ALRenderUtil::setupTonemap()
     switch (mTonemapType)
     {
     default:
-    case ALTonemap::TONEMAP_ACES_HILL: tone_shader = &gDeferredPostTonemapACESProgram;  break; // 1
-    case ALTonemap::TONEMAP_UCHIMURA:  tone_shader = &gDeferredPostTonemapUchiProgram;  break; // 2
-    case ALTonemap::TONEMAP_AMD:       tone_shader = &gDeferredPostTonemapLPMProgram;   break; // 3
-    case ALTonemap::TONEMAP_UNCHARTED: tone_shader = &gDeferredPostTonemapHableProgram; break; // 4
-    case ALTonemap::TONEMAP_FILMIC:    tone_shader = &gDeferredPostTonemapHableProgram; break; // 5
-    case ALTonemap::TONEMAP_PBR   :    tone_shader = &gDeferredPostTonemapACESProgram;  break; // 6
+    case ALTonemap::TONEMAP_ACES_HILL:          tone_shader = &gDeferredPostTonemapACESProgram;  break; // 1
+    case ALTonemap::TONEMAP_UCHIMURA:           tone_shader = &gDeferredPostTonemapUchiProgram;  break; // 2
+    case ALTonemap::TONEMAP_AMD:                tone_shader = &gDeferredPostTonemapLPMProgram;   break; // 3
+    case ALTonemap::TONEMAP_UNCHARTED:          tone_shader = &gDeferredPostTonemapHableProgram; break; // 4
+    case ALTonemap::TONEMAP_FILMIC_UNCHARTED:   tone_shader = &gDeferredPostTonemapHableProgram; break; // 5
+    case ALTonemap::TONEMAP_FILMIC_ACES:        tone_shader = &gDeferredPostTonemapACESProgram;  break; // 6
+    case ALTonemap::TONEMAP_PBR   :             tone_shader = &gDeferredPostTonemapACESProgram;  break; // 7
     }
 
     tone_shader->bind();
@@ -324,7 +323,8 @@ bool ALRenderUtil::setupTonemap()
     }
 
     case ALTonemap::TONEMAP_UNCHARTED: // 4
-    case ALTonemap::TONEMAP_FILMIC: // FilmicもHableプログラムを使うが、FilmicのルックはtoneMapF.glslで行い、ここではHable固有パラメータは不要
+    case ALTonemap::TONEMAP_FILMIC_UNCHARTED:
+    case ALTonemap::TONEMAP_FILMIC_ACES: // FilmicもHableプログラムを使うが、FilmicのルックはtoneMapF.glslで行い、ここではHable固有パラメータは不要
     {
         // Uncharted(Hable)の事前パラメータ（ttype==4で使用）
         // Filmic(5)では toneMapF.glsl 側で early return するため、下記は使われないが設定しても害はない
@@ -390,8 +390,11 @@ void ALRenderUtil::renderTonemap(LLRenderTarget* src, LLRenderTarget* exposure, 
         case ALTonemap::TONEMAP_UNCHARTED: // Uncharted (Hable)
             tone_shader = &gDeferredPostTonemapHableProgram;
             break;
-        case ALTonemap::TONEMAP_FILMIC: // Filmic → ベースは Hable を使用（仕上げはtoneMapF側でフィルミック風）
+        case ALTonemap::TONEMAP_FILMIC_UNCHARTED: // Filmic → ベースは Hable を使用（仕上げはtoneMapF側でフィルミック風）
             tone_shader = &gDeferredPostTonemapHableProgram;
+            break;
+        case ALTonemap::TONEMAP_FILMIC_ACES:
+            tone_shader = &gDeferredPostTonemapACESProgram;
             break;
         case ALTonemap::TONEMAP_PBR : // PBR (Unify Legacy) → トーンマップ自体はACESでOK（統一はsoftenで実施）
         default:

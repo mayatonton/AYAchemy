@@ -423,8 +423,9 @@ width="100">
   <combo_item name="current_2"  label="Uchimura (GT)"      value="2"/>
   <combo_item name="current_3"  label="AMD LPM"            value="3"/>
   <combo_item name="current_4"  label="Uncharted (Hable)"  value="4"/>
-  <combo_item name="filmic"     label="Filmic"      value="5"/>
-  <!-- <combo_item name="pbrlike"    label="PBR (Unify Legacy)" value="6"/> -->
+  <combo_item name="filmic"     label="Filmic (Hable)"     value="5"/>
+  <combo_item name="filmic"     label="Filmic (ACES)"      value="6"/>
+  <!-- <combo_item name="pbrlike"    label="PBR (Unify Legacy)" value="7"/> -->
 </combo_box>
 <button
   name="reset_shading_parameters"

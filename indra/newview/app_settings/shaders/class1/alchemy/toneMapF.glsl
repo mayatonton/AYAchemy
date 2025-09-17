@@ -33,7 +33,7 @@ uniform float aces_mix;
 uniform int   uShadingMode;
 
 // Filmic系オプション（全トーンマッピングタイプで有効）
-uniform int   uToneMapType;       // 0..6 （Filmic=5）
+uniform int   uToneMapType;       // 0..6 （Filmic=5,6）
 uniform float uExposureEV;
 uniform float uWB_TempK;
 uniform float uWB_Tint;
@@ -254,8 +254,8 @@ void main()
     // TONEMAP_METHOD == 0 (HDR Debug) など
 #endif
 
-    // フィニッシュ（Filmic=5 のときだけ適用して差を明確化）
-    if (uToneMapType == 5)
+    // フィニッシュ（Filmic=5,6 のときだけ適用して差を明確化）
+    if (uToneMapType == 5 || uToneMapType == 6)
     {
         vec3 base = diff.rgb;
 
