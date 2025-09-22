@@ -238,7 +238,8 @@ private:
     bool            mLanguageTextInputAllowed;
     LLPreeditor*    mPreeditor = nullptr;
 
-    SDL_Rect mIMERect{0,0,0,0};
+    SDL_Rect mIMERect{0,0,0,0};     // last IME rect in px (top-left)
+    bool     mIMERectValid = false;  // ← 追加: 直近矩形が有効か
     float    mHiDPIScaleX = 1.0f, mHiDPIScaleY = 1.0f;
 };
 
