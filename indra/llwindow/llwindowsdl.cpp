@@ -2429,6 +2429,42 @@ void LLWindowSDL::allowLanguageTextInput(LLPreeditor *preeditor, BOOL b)
     }
 }
 
+void LLWindowSDL::setLanguageTextInputRect(const LLRect& r_logical)
+{
+#if SDL_VERSION_ATLEAST(2,0,4)
+    if (!mWindow) return;
+
+    // HiDPIスケール（論理→実ピクセル）
+    int win_w=0, win_h=0, draw_w=0, draw_h=0;
+    SDL_GetWindowSize(mWindow, &win_w, &win_h);
+    SDL_GL_GetDrawableSize(mWindow, &draw_w, &draw_h);
+    const float sx = (win_w > 0) ? (float)draw_w / (float)win_w : 1.0f;
+    const float sy = (win_h > 0) ? (float)draw_h / (float)win_h : 1.0f;
+
+    // LLRect は bottom-left 原点。SDL は top-left 原点。
+    // ピクセルに変換
+    const int left_px   = llround((F32)r_logical.mLeft   * sx);
+    const int right_px  = llround((F32)r_logical.mRight  * sx);
+    const int bottom_px = llround((F32)r_logical.mBottom * sy);
+    const int top_px    = llround((F32)r_logical.mTop    * sy);
+
+    // 幅・高さ（ピクセル）
+    const int width_px  = llmax(0, right_px - left_px);
+    const int height_px = llmax(0, top_px - bottom_px);
+
+    // SDLのYは上原点なので、矩形の「上」を基準に反転
+    SDL_Rect rc;
+    rc.x = left_px;
+    rc.y = draw_h - top_px;   // 画面上からのオフセット
+    rc.w = width_px;
+    rc.h = height_px;
+
+    SDL_SetTextInputRect(&rc);
+#else
+    (void)r_logical;
+#endif
+}
+
 void LLWindowSDL::updateLanguageTextInputArea()
 {
     if (mLanguageTextInputAllowed && mPreeditor)
@@ -2450,25 +2486,40 @@ void LLWindowSDL::updateLanguageTextInputArea()
     }
 }
 
-void LLWindowSDL::setLanguageTextInput( const LLCoordGL & pos )
+void LLWindowSDL::setLanguageTextInput( const LLCoordGL & pos_logical )
 {
-    if (mLanguageTextInputAllowed && mPreeditor)
+#if SDL_VERSION_ATLEAST(2,0,4)
+    if (!mWindow || !mLanguageTextInputAllowed)
     {
-        LLCoordGL caret_coord;
-        LLRect preedit_bounds;
-        if (mPreeditor->getPreeditLocation(-1, &caret_coord, &preedit_bounds, NULL))
-        {
-            LLCoordWindow window_pos;
-            convertCoords(pos, &window_pos);
-
-            SDL_Rect coords;
-            coords.x = window_pos.mX;
-            coords.y = window_pos.mY;
-            coords.w = preedit_bounds.getWidth() - coords.x;
-            coords.h = preedit_bounds.getHeight() - coords.y;
-            SDL_SetTextInputRect(&coords);
-        }
+        return;
     }
+
+    // HiDPI スケール（論理→実ピクセル）
+    int win_w=0, win_h=0, draw_w=0, draw_h=0;
+    SDL_GetWindowSize(mWindow, &win_w, &win_h);
+    SDL_GL_GetDrawableSize(mWindow, &draw_w, &draw_h);
+    const float sx = (win_w > 0) ? (float)draw_w / (float)win_w : 1.0f;
+    const float sy = (win_h > 0) ? (float)draw_h / (float)win_h : 1.0f;
+
+    // bottom-left(論理) → 実ピクセル
+    const int px_x = llround((F32)pos_logical.mX * sx);
+    const int px_y = llround((F32)pos_logical.mY * sy);
+
+    // SDLは top-left 原点なので、Yを反転
+    // 矩形の高さは行高相当（固定でも可）
+    const int caret_h_px = 24;   // 必要なら調整
+    const int caret_w_px = 16;
+
+    SDL_Rect rc;
+    rc.x = px_x;
+    rc.y = draw_h - px_y - caret_h_px;  // 上原点に変換（高さ分オフセット）
+    rc.w = caret_w_px;
+    rc.h = caret_h_px;
+
+    SDL_SetTextInputRect(&rc);
+#else
+    (void)pos_logical;
+#endif
 }
 
 //static

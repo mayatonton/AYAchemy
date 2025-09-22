@@ -297,6 +297,9 @@ public:
     typedef boost::function<void(S32&, S32&, LLWString&, S32&, const LLWString&)> autoreplace_callback_t;
     autoreplace_callback_t mAutoreplaceCallback;
     void            setAutoreplaceCallback(autoreplace_callback_t cb) { mAutoreplaceCallback = cb; }
+    // 追加: IME 候補ウィンドウ位置更新（ウィンドウ座標でキャレット矩形を通知）
+    void updateIMEWindowLocation();
+
 
   private:
     // private helper methods
@@ -336,7 +339,7 @@ public:
     void            setText(const LLStringExplicit &new_text, bool use_size_limit);
 
     void            setContextMenu(LLContextMenu* new_context_menu);
-
+    void            updateLanguageTextInputArea();
 
 protected:
     LLUIString      mText;                  // The string being edited.

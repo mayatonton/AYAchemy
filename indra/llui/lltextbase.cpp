@@ -652,13 +652,40 @@ void LLTextBase::drawCursor()
                     1);
             }
 
-            // Make sure the IME is in the right place
-            LLRect screen_pos = calcScreenRect();
-            LLCoordGL ime_pos( screen_pos.mLeft + llfloor(cursor_rect.mLeft), screen_pos.mBottom + llfloor(cursor_rect.mTop) );
+            // // Make sure the IME is in the right place
+            // LLRect screen_pos = calcScreenRect();
+            // LLCoordGL ime_pos( screen_pos.mLeft + llfloor(cursor_rect.mLeft), screen_pos.mBottom + llfloor(cursor_rect.mTop) );
 
-            ime_pos.mX = (S32) (ime_pos.mX * LLUI::getScaleFactor().mV[VX]);
-            ime_pos.mY = (S32) (ime_pos.mY * LLUI::getScaleFactor().mV[VY]);
-            getWindow()->setLanguageTextInput( ime_pos );
+            // ime_pos.mX = (S32) (ime_pos.mX * LLUI::getScaleFactor().mV[VX]);
+            // ime_pos.mY = (S32) (ime_pos.mY * LLUI::getScaleFactor().mV[VY]);
+            // getWindow()->setLanguageTextInput( ime_pos );
+
+            // Make sure the IME is in the right place (bottom-left origin, logical px)
+            static LLUICachedControl<S32> kImeOffX("IMEOffsetX", 0);
+            static LLUICachedControl<S32> kImeOffY("IMEOffsetY", 0);
+
+            // 1) ローカル → スクリーン（top-left）
+            S32 sx = 0, sy = 0;
+            localPointToScreen(llfloor(cursor_rect.mLeft), llfloor(cursor_rect.mBottom), &sx, &sy);
+
+            // 2) スクリーン → GL（bottom-left, 論理px）
+            LLCoordGL gl_pos;
+            LLUI::screenPointToGL(sx, sy, &gl_pos.mX, &gl_pos.mY);
+
+            // 3) オフセット適用
+            gl_pos.mX += kImeOffX;
+            gl_pos.mY += kImeOffY;
+
+            const S32 caret_w = 16;
+            const S32 line_h  = ll_round((F32)segmentp->getStyle()->getFont()->getLineHeight());
+
+            LLRect ime_rect_gl;
+            ime_rect_gl.mLeft   = gl_pos.mX;
+            ime_rect_gl.mRight  = gl_pos.mX + caret_w;
+            ime_rect_gl.mBottom = gl_pos.mY;
+            ime_rect_gl.mTop    = gl_pos.mY + line_h;
+
+            getWindow()->setLanguageTextInputRect(ime_rect_gl);
         }
     }
 }

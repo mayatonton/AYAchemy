@@ -113,6 +113,7 @@ public:
     /*virtual*/ void focusClient();
 
     /*virtual*/ void allowLanguageTextInput(LLPreeditor *preeditor, BOOL b);
+    /*virtual*/ void setLanguageTextInputRect(const LLRect& /*r*/) override {}
     /*virtual*/ void setLanguageTextInput( const LLCoordGL & pos );
     /*virtual*/ void updateLanguageTextInputArea();
     /*virtual*/ void interruptLanguageTextInput();
