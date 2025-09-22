@@ -241,36 +241,42 @@ void main()
     float tempK = (uWB_TempK > 0.0) ? uWB_TempK : 6500.0;
     diff.rgb = applyWhiteBalance(diff.rgb, tempK, uWB_Tint);
 
-    // 方式別トーンマップ（プログラム切替はC++側の選択に依存）
-#if TONEMAP_METHOD == 1 // ACES Hill
+#if TONEMAP_METHOD == 1
     diff.rgb = mix(ACES_Hill(diff.rgb), diff.rgb, aces_mix);
-#elif TONEMAP_METHOD == 2 // Uchimura
+#elif TONEMAP_METHOD == 2
     diff.rgb = uchimura(diff.rgb);
-#elif TONEMAP_METHOD == 3 // AMD LPM
+#elif TONEMAP_METHOD == 3
     RunLPMFilter(diff.rgb);
-#elif TONEMAP_METHOD == 4 // Uncharted(Hable)
+#elif TONEMAP_METHOD == 4
     diff.rgb = uncharted2(diff.rgb);
-#else
-    // TONEMAP_METHOD == 0 (HDR Debug) など
 #endif
 
-    // フィニッシュ（Filmic=5,6 のときだけ適用して差を明確化）
-    if (uToneMapType == 5 || uToneMapType == 6)
+    // 分岐: Filmic系は強い仕上げ、それ以外は軽いContrast/Saturationのみ
+    bool is_filmic = (uToneMapType == 5 || uToneMapType == 6); // 5=Filmic(Hable), 6=Filmic(ACES)
+
+    if (is_filmic)
     {
         vec3 base = diff.rgb;
 
-        // 1) シャドウ持ち上げ → 2) ハイライトロールオフ → 3) ハイライト脱彩 → 4) ティール＆オレンジ → 5) コントラスト/彩度
+        // Filmicの強い仕上げ
         vec3 c1 = liftShadows(base, uFilmicShadowLift);
         vec3 c2 = rolloffHighlights(c1);
         vec3 c3 = desaturateHL(c2, uFilmicHighlightDesat);
         vec3 c4 = tealOrange(c3, uFilmicTealOrange);
+        vec3 c5 = contrastSaturation(c4,
+                                    (uFilmicContrast   > 0.0) ? uFilmicContrast   : 1.0,
+                                    (uFilmicSaturation > 0.0) ? uFilmicSaturation : 1.0);
 
-        float contr = (uFilmicContrast > 0.0) ? uFilmicContrast : 1.0;
-        float sat   = (uFilmicSaturation > 0.0) ? uFilmicSaturation : 1.0;
-        vec3  c5    = contrastSaturation(c4, contr, sat);
-
-        // 強度ブレンド
         diff.rgb = mix(base, c5, clamp(uFilmicAmount, 0.0, 1.0));
+    }
+    else
+    {
+        if (abs(uFilmicContrast - 1.0) > 1e-4 || abs(uFilmicSaturation - 1.0) > 1e-4)
+        {
+            diff.rgb = contrastSaturation(diff.rgb,
+                                        (uFilmicContrast   > 0.0) ? uFilmicContrast   : 1.0,
+                                        (uFilmicSaturation > 0.0) ? uFilmicSaturation : 1.0);
+        }
     }
 
     diff.rgb = clamp(diff.rgb, 0.0, 1.0);
