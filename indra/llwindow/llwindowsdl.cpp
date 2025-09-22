@@ -1831,47 +1831,88 @@ void LLWindowSDL::gatherInput()
             {
             case SDL_WINDOWEVENT_MOVED:
                 break;
-            //case SDL_WINDOWEVENT_SIZE_CHANGED:
+
             case SDL_WINDOWEVENT_RESIZED:
             {
-                S32 width = llmax(event.window.data1, (S32) mMinWindowWidth);
-                S32 height = llmax(event.window.data2, (S32) mMinWindowHeight);
+                S32 width  = llmax(event.window.data1, (S32)mMinWindowWidth);
+                S32 height = llmax(event.window.data2, (S32)mMinWindowHeight);
                 mCallbacks->handleResize(this, width, height);
                 break;
             }
+
             case SDL_WINDOWEVENT_SHOWN:
-            case SDL_WINDOWEVENT_HIDDEN:
             case SDL_WINDOWEVENT_EXPOSED:
-            case SDL_WINDOWEVENT_MINIMIZED:
-                [[fallthrough]];
             case SDL_WINDOWEVENT_MAXIMIZED:
-                [[fallthrough]];
             case SDL_WINDOWEVENT_RESTORED:
             {
                 Uint32 flags = SDL_GetWindowFlags(mWindow);
                 bool minimized = (flags & SDL_WINDOW_MINIMIZED);
-                bool hidden = (flags & SDL_WINDOW_HIDDEN);
-
+                bool hidden    = (flags & SDL_WINDOW_HIDDEN);
                 mCallbacks->handleActivate(this, !minimized || !hidden);
-                LL_INFOS() << "SDL deiconification state switched to " << minimized << LL_ENDL;
+
+#if SDL_VERSION_ATLEAST(2,0,4)
+                // ウィンドウ復帰時は IME を再開＆矩形を再通知
+                if (mLanguageTextInputAllowed)
+                {
+                    SDL_StartTextInput();
+                    if (mIMERectValid)
+                    {
+                        SDL_SetTextInputRect(&mIMERect);
+                    }
+                }
+#endif
                 break;
             }
+
             case SDL_WINDOWEVENT_ENTER:
+#if SDL_VERSION_ATLEAST(2,0,4)
+                if (mLanguageTextInputAllowed)
+                {
+                    SDL_StartTextInput();
+                    if (mIMERectValid)
+                    {
+                        SDL_SetTextInputRect(&mIMERect);
+                    }
+                }
+#endif
                 break;
+
             case SDL_WINDOWEVENT_LEAVE:
                 mCallbacks->handleMouseLeave(this);
                 break;
+
             case SDL_WINDOWEVENT_FOCUS_GAINED:
                 mCallbacks->handleFocus(this);
+#if SDL_VERSION_ATLEAST(2,0,4)
+                // フォーカス復帰で IME を再開＆矩形を再通知
+                if (mLanguageTextInputAllowed)
+                {
+                    SDL_StartTextInput();
+                    if (mIMERectValid)
+                    {
+                        SDL_SetTextInputRect(&mIMERect);
+                    }
+                }
+#endif
                 break;
+
             case SDL_WINDOWEVENT_FOCUS_LOST:
                 mCallbacks->handleFocusLost(this);
+                // SDL_StopTextInput() は呼ばない（Mozcのモード保持のため）
                 break;
+
+            case SDL_WINDOWEVENT_MINIMIZED:
+            case SDL_WINDOWEVENT_HIDDEN:
+                mCallbacks->handleActivate(this, false);
+                // ここでも Stop はしない。完全に停止したい運用ならここで SDL_StopTextInput() を呼び、
+                // FOCUS_GAINED/SHOWN で Start にする（モード維持は落ちやすくなる）
+                break;
+
             case SDL_WINDOWEVENT_CLOSE:
                 break;
+
 #if SDL_VERSION_ATLEAST(2, 0, 5)
             case SDL_WINDOWEVENT_TAKE_FOCUS:
-                break;
             case SDL_WINDOWEVENT_HIT_TEST:
                 break;
 #endif
@@ -1880,6 +1921,7 @@ void LLWindowSDL::gatherInput()
             }
             break;
         }
+
         case SDL_QUIT:
             if (mCallbacks->handleCloseRequest(this))
             {
@@ -2390,76 +2432,72 @@ void LLWindowSDL::bringToFront()
 
 void LLWindowSDL::allowLanguageTextInput(LLPreeditor *preeditor, BOOL b)
 {
+#if SDL_VERSION_ATLEAST(2,0,4)
+    // フォーカス外コントロールからの disable は無視
     if (preeditor != mPreeditor && !b)
     {
-        // This condition may occur by a call to
-        // setEnabled(BOOL) against LLTextEditor or LLLineEditor
-        // when the control is not focused.
-        // We need to silently ignore the case so that
-        // the language input status of the focused control
-        // is not disturbed.
         return;
     }
 
-    // Take care of old and new preeditors.
-    if (preeditor != mPreeditor || !b)
+    // 切替/終了前に未確定文字確定
+    if (mLanguageTextInputAllowed && (!b || preeditor != mPreeditor))
     {
-        // We need to interrupt before updating mPreeditor,
-        // so that the fix string from input method goes to
-        // the old preeditor.
-        if (mLanguageTextInputAllowed)
-        {
-            interruptLanguageTextInput();
-        }
-        mPreeditor = (b ? preeditor : NULL);
+        interruptLanguageTextInput();
     }
+
+    mPreeditor = b ? preeditor : nullptr;
 
     if ((bool)b == mLanguageTextInputAllowed)
     {
         return;
     }
     mLanguageTextInputAllowed = b;
+
     if (mLanguageTextInputAllowed)
     {
         SDL_StartTextInput();
+        // 直近の矩形があれば再通知
+        if (mIMERectValid)
+        {
+            SDL_SetTextInputRect(&mIMERect);
+        }
     }
     else
     {
-        SDL_StopTextInput();
+        // Mozc のモード維持のため Stop は呼ばない
+        // SDL_StopTextInput();
     }
+#else
+    (void)preeditor; (void)b;
+#endif
 }
 
 void LLWindowSDL::setLanguageTextInputRect(const LLRect& r_logical)
 {
 #if SDL_VERSION_ATLEAST(2,0,4)
-    if (!mWindow) return;
+    if (!mWindow || !mLanguageTextInputAllowed) return;
 
-    // HiDPIスケール（論理→実ピクセル）
     int win_w=0, win_h=0, draw_w=0, draw_h=0;
     SDL_GetWindowSize(mWindow, &win_w, &win_h);
     SDL_GL_GetDrawableSize(mWindow, &draw_w, &draw_h);
     const float sx = (win_w > 0) ? (float)draw_w / (float)win_w : 1.0f;
     const float sy = (win_h > 0) ? (float)draw_h / (float)win_h : 1.0f;
 
-    // LLRect は bottom-left 原点。SDL は top-left 原点。
-    // ピクセルに変換
     const int left_px   = llround((F32)r_logical.mLeft   * sx);
     const int right_px  = llround((F32)r_logical.mRight  * sx);
     const int bottom_px = llround((F32)r_logical.mBottom * sy);
     const int top_px    = llround((F32)r_logical.mTop    * sy);
 
-    // 幅・高さ（ピクセル）
-    const int width_px  = llmax(0, right_px - left_px);
-    const int height_px = llmax(0, top_px - bottom_px);
-
-    // SDLのYは上原点なので、矩形の「上」を基準に反転
     SDL_Rect rc;
     rc.x = left_px;
-    rc.y = draw_h - top_px;   // 画面上からのオフセット
-    rc.w = width_px;
-    rc.h = height_px;
+    rc.w = llmax(0, right_px - left_px);
+    rc.h = llmax(0, top_px   - bottom_px);
+    rc.y = draw_h - top_px; // bottom-left → top-left
 
-    SDL_SetTextInputRect(&rc);
+    mIMERect      = rc;                 // キャッシュ
+    mIMERectValid = (rc.w > 0 && rc.h > 0);
+
+    SDL_SetTextInputRect(&mIMERect);
 #else
     (void)r_logical;
 #endif
