@@ -182,6 +182,7 @@ public:
     // control platform's Language Text Input mechanisms.
     virtual void allowLanguageTextInput(LLPreeditor *preeditor, BOOL b) {}
     virtual void setLanguageTextInput( const LLCoordGL & pos ) {};
+    virtual void setLanguageTextInputRect(const LLRect& r) {}
     virtual void updateLanguageTextInputArea() {}
     virtual void interruptLanguageTextInput() {}
     virtual void spawnWebBrowser(const std::string& escaped_url, bool async) {};

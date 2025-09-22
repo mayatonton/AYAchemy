@@ -141,6 +141,7 @@ public:
     U32 getAvailableVRAMMegabytes() override;
 
     void allowLanguageTextInput(LLPreeditor *preeditor, BOOL b) override;
+    void setLanguageTextInputRect(const LLRect& r) override;
     void updateLanguageTextInputArea() override;
     void setLanguageTextInput( const LLCoordGL & pos ) override;
 
@@ -236,6 +237,9 @@ private:
 
     bool            mLanguageTextInputAllowed;
     LLPreeditor*    mPreeditor = nullptr;
+
+    SDL_Rect mIMERect{0,0,0,0};
+    float    mHiDPIScaleX = 1.0f, mHiDPIScaleY = 1.0f;
 };
 
 

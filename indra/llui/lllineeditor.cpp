@@ -248,6 +248,7 @@ void LLLineEditor::onFocusReceived()
     gEditMenuHandler = this;
     LLUICtrl::onFocusReceived();
     updateAllowingLanguageInput();
+    updateIMEWindowLocation(); // 追加
 }
 
 void LLLineEditor::onFocusLost()
@@ -514,6 +515,8 @@ void LLLineEditor::setCursor( S32 pos )
             mScrollHPos = getCursor();
         }
     }
+    // ここでキャレット/スクロール位置が確定
+    updateIMEWindowLocation(); // 追加
 }
 
 
@@ -829,6 +832,7 @@ BOOL LLLineEditor::handleMouseDown(S32 x, S32 y, MASK mask)
     if (mMouseDownSignal)
         (*mMouseDownSignal)(this,x,y,mask);
 
+    updateIMEWindowLocation(); // 追加
     return TRUE;
 }
 
@@ -908,6 +912,8 @@ BOOL LLLineEditor::handleHover(S32 x, S32 y, MASK mask)
         LL_DEBUGS("UserInput") << "hover handled by " << getName() << " (active)" << LL_ENDL;
 #endif
         handled = TRUE;
+
+        updateIMEWindowLocation(); // 追加
     }
 
     if( !handled  )
@@ -955,6 +961,7 @@ BOOL LLLineEditor::handleMouseUp(S32 x, S32 y, MASK mask)
         // take selection to 'primary' clipboard
         updatePrimary();
     }
+    updateIMEWindowLocation(); // 追加
 
     // We won't call LLUICtrl::handleMouseUp to avoid double calls of  childrenHandleMouseUp().Just invoke the signal manually.
     if (mMouseUpSignal)
@@ -1686,6 +1693,7 @@ BOOL LLLineEditor::handleKeyHere(KEY key, MASK mask )
                 {
                     mSpellCheckTimer.setTimerExpirySec(SPELLCHECK_DELAY);
                 }
+                updateIMEWindowLocation(); // 追加
             }
         }
     }
@@ -1738,8 +1746,8 @@ BOOL LLLineEditor::handleUnicodeCharHere(llwchar uni_char)
             // HACK! The only usage of this callback doesn't do anything with the character.
             // We'll have to do something about this if something ever changes! - Doug
             onKeystroke();
-
             mSpellCheckTimer.setTimerExpirySec(SPELLCHECK_DELAY);
+            updateIMEWindowLocation(); // 追加
         }
     }
     return handled;
@@ -2153,13 +2161,16 @@ void LLLineEditor::draw()
                 }
 
                 // Make sure the IME is in the right place
-                S32 pixels_after_scroll = findPixelNearestPos();    // RCalculcate for IME position
-                LLRect screen_pos = calcScreenRect();
-                LLCoordGL ime_pos( screen_pos.mLeft + pixels_after_scroll, screen_pos.mTop - lineeditor_v_pad );
+                // S32 pixels_after_scroll = findPixelNearestPos();    // RCalculcate for IME position
+                // LLRect screen_pos = calcScreenRect();
+                // LLCoordGL ime_pos( screen_pos.mLeft + pixels_after_scroll, screen_pos.mTop - lineeditor_v_pad );
 
-                ime_pos.mX = (S32) (ime_pos.mX * LLUI::getScaleFactor().mV[VX]);
-                ime_pos.mY = (S32) (ime_pos.mY * LLUI::getScaleFactor().mV[VY]);
-                getWindow()->setLanguageTextInput( ime_pos );
+                // ime_pos.mX = (S32) (ime_pos.mX * LLUI::getScaleFactor().mV[VX]);
+                // ime_pos.mY = (S32) (ime_pos.mY * LLUI::getScaleFactor().mV[VY]);
+                // getWindow()->setLanguageTextInput( ime_pos );
+
+                // Make sure the IME is in the right place
+                updateIMEWindowLocation();
             }
         }
 
@@ -2786,4 +2797,52 @@ void LLLineEditor::setContextMenu(LLContextMenu* new_context_menu)
 void LLLineEditor::setFont(const LLFontGL* font)
 {
     mGLFont = font;
+}
+
+void LLLineEditor::updateIMEWindowLocation()
+{
+    LLWindow* window = getWindow();
+    if (!window || !hasFocus())
+    {
+        return;
+    }
+
+    // ユーザー微調整（論理px）
+    static LLUICachedControl<S32> kImeOffX("IMEOffsetX", 0);
+    static LLUICachedControl<S32> kImeOffY("IMEOffsetY", 0);
+
+    // 行高とベースライン付近の縦位置（draw() と同じ計算）
+    LLRect background(0, getRect().getHeight(), getRect().getWidth(), 0);
+    background.stretch(-mBorderThickness);
+    S32 lineeditor_v_pad = (background.getHeight() - mGLFont->getLineHeight()) / 2;
+    if (mSpellCheck) lineeditor_v_pad += 1;
+
+    // キャレットのローカルX（左上原点のローカル座標）
+    S32 caret_x_local = findPixelNearestPos();
+    S32 caret_y_local = lineeditor_v_pad; // ベースライン付近
+
+    // ローカル→スクリーン（top-left）
+    S32 sx = 0, sy = 0;
+    localPointToScreen(caret_x_local, caret_y_local, &sx, &sy);
+
+    // スクリーン→GL（bottom-left, 論理px）
+    LLCoordGL gl_pos;
+    LLUI::screenPointToGL(sx, sy, &gl_pos.mX, &gl_pos.mY);
+
+    // ユーザー微調整
+    gl_pos.mX += kImeOffX;
+    gl_pos.mY += kImeOffY;
+
+    // 矩形（LLRectはbottom-left原点）
+    const S32 caret_w = 16;
+    const S32 line_h  = ll_round((F32)mGLFont->getLineHeight());
+
+    LLRect ime_rect_gl;
+    ime_rect_gl.mLeft   = gl_pos.mX;
+    ime_rect_gl.mRight  = gl_pos.mX + caret_w;
+    ime_rect_gl.mBottom = gl_pos.mY;
+    ime_rect_gl.mTop    = gl_pos.mY + line_h;
+
+    // SDL2 / XIM とも下層で変換・反映する
+    window->setLanguageTextInputRect(ime_rect_gl);
 }
