@@ -16453,14 +16453,14 @@
     <key>Comment</key><string>IME candidate window X offset in logical pixels</string>
     <key>Persist</key><integer>1</integer>
     <key>Type</key><string>S32</string>
-    <key>Value</key><integer>0</integer>
+    <key>Value</key><integer>10</integer>
   </map>
   <key>IMEOffsetY</key>
   <map>
     <key>Comment</key><string>IME candidate window Y offset in logical pixels (positive = up)</string>
     <key>Persist</key><integer>1</integer>
     <key>Type</key><string>S32</string>
-    <key>Value</key><integer>0</integer>
+    <key>Value</key><integer>-10</integer>
   </map>
 
 </map>
