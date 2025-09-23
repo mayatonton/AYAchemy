@@ -38,15 +38,29 @@
 #include "llmath.h"
 #include "llrand.h"
 
-#include "fmodstudio/fmod.hpp"
-#include "fmodstudio/fmod_errors.h"
+#include "fmod.hpp"
+#include "fmod_studio.hpp"
+#include "fmod_errors.h"
 #include "lldir.h"
 
 #include "sound_ids.h"
 
-const U32 EXTRA_SOUND_CHANNELS = 10;
+#include "fmod_common.h"   // FMOD_RESULT / F_CALLBACK
+#include "fmod_dsp.h"      // FMOD_DSP_STATE / FMOD_DSP_DESCRIPTION
+#include <cstring>
 
-FMOD_RESULT F_CALLBACK windDSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, float *outbuffer, unsigned int length, int inchannels, int *outchannels);
+#ifndef F_CALLBACK   // 一部環境で未定義になる保険（本来は fmod_common.h が定義）
+#define F_CALLBACK
+#endif
+
+const U32 EXTRA_SOUND_CHANNELS = 10;
+FMOD_RESULT F_CALLBACK windDSPCallback(
+    FMOD_DSP_STATE* dsp_state,
+    float*          inbuffer,
+    float*          outbuffer,
+    unsigned int    length,
+    int             inchannels,
+    int*            outchannels);
 
 FMOD::ChannelGroup *LLAudioEngine_FMODSTUDIO::mChannelGroups[LLAudioEngine::AUDIO_TYPE_COUNT] = {nullptr};
 
@@ -726,20 +740,45 @@ void LLAudioChannelFMODSTUDIO::set3DMode(bool use3d)
 // not the main thread.  May have implications for callees or audio
 // engine shutdown.
 
-FMOD_RESULT F_CALLBACK windDSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, float *outbuffer, unsigned int length, int inchannels, int *outchannels)
+FMOD_RESULT F_CALLBACK windDSPCallback(
+    FMOD_DSP_STATE* dsp_state,
+    float*          inbuffer,
+    float*          outbuffer,
+    unsigned int    length,
+    int             inchannels,
+    int*            outchannels)
 {
-    // inbuffer = incomming data.
-    // newbuffer = outgoing data. AKA this DSP's output.
-    // length = length in samples at this mix time. True buffer size, in bytes, would be (length * sizeof(float) * inchannels).
-    // userdata = user-provided data attached this DSP via FMOD::DSP::setUserData.
+    if (!outbuffer || length == 0)
+        return FMOD_OK;
 
-    LLWindGen<LLAudioEngine_FMODSTUDIO::MIXBUFFERFORMAT> *windgen;
-    FMOD::DSP *thisdsp = (FMOD::DSP *)dsp_state->instance;
+    // 出力チャンネル数の決定（未設定/0なら入力チャンネル数、どちらもなければエンジン既定のチャンネル数を使う）
+    int ch = inchannels;
+#ifdef LLAUDIOENGINE_FMODSTUDIO_H
+    // エンジンで明示している既定チャンネル数があれば利用（ヘッダに定義されている想定）
+    const int kDefaultCh = LLAudioEngine_FMODSTUDIO::MIXBUFFERCHANNELS;
+#else
+    const int kDefaultCh = 2;
+#endif
+    if (outchannels)
+    {
+        if (*outchannels <= 0) *outchannels = (inchannels > 0 ? inchannels : kDefaultCh);
+        ch = *outchannels;
+    }
+    if (ch <= 0) ch = kDefaultCh;
 
-    thisdsp->getUserData((void **)&windgen);
+    // 出力を一度クリアしてから生成（入力があっても風ノイズは生成系なのでゼロから埋めるのが安全）
+    std::memset(outbuffer, 0, static_cast<size_t>(length) * static_cast<size_t>(ch) * sizeof(float));
+
+    // ユーザーデータから風ノイズジェネレータを取得して生成
+    LLWindGen<LLAudioEngine_FMODSTUDIO::MIXBUFFERFORMAT>* windgen = nullptr;
+    FMOD::DSP* thisdsp = reinterpret_cast<FMOD::DSP*>(dsp_state->instance);
+    if (thisdsp) thisdsp->getUserData(reinterpret_cast<void**>(&windgen));
 
     if (windgen)
-        windgen->windGenerate((LLAudioEngine_FMODSTUDIO::MIXBUFFERFORMAT *)outbuffer, length);
+    {
+        // outbuffer はエンジンのミックスフォーマット（通常 float）である前提
+        windgen->windGenerate(reinterpret_cast<LLAudioEngine_FMODSTUDIO::MIXBUFFERFORMAT*>(outbuffer), length);
+    }
 
     return FMOD_OK;
 }
