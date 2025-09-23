@@ -614,4 +614,49 @@
 	<font_size name="Large" font="UbuntuMono" size="11.4" />
 	<font_size name="Medium" font="UbuntuMono" size="9.4" />
 	<font_size name="Small" font="UbuntuMono" size="8.4" />
+
+	<!-- === LINESeed family templates === -->
+	<font name="LINESeed">
+		<file>LINESeedSans_Rg.otf</file>
+		<file>LINESeedJP_OTF_Rg.otf</file>
+	</font>
+	<font name="LINESeed" font_style="BOLD">
+		<file>LINESeedSans_Bd.otf</file>
+		<file>LINESeedJP_OTF_Bd.otf</file>
+	</font>
+	<font name="LINESeed" font_style="ITALIC">
+		<file>NotoSans-Italic.otf</file>
+		<file>DejaVuSans-Oblique.ttf</file>
+	</font>
+	<font name="LINESeed" font_style="BOLD|ITALIC">
+		<file>NotoSans-BoldItalic.otf</file>
+		<file>DejaVuSans-BoldOblique.ttf</file>
+	</font>
+	<font_size name="Huge"   size="16.0" />
+	<font_size name="Large"  size="11.4" />
+	<font_size name="Medium" size="9.4" />
+	<font_size name="Small"  size="8.4" />
+
+	<!-- === AlibabaSansUI family templates === -->
+	<font name="AlibabaSansUI">
+		<file>AlibabaSans-Regular.otf</file>
+		<file>AlibabaSansJP-Regular.otf</file>
+	</font>
+	<font name="AlibabaSansUI" font_style="BOLD">
+		<file>AlibabaSans-Bold.otf</file>
+		<file>AlibabaSansJP-Bold.otf</file>
+	</font>
+	<font name="AlibabaSansUI" font_style="ITALIC">
+		<file>NotoSans-Italic.otf</file>
+		<file>DejaVuSans-Oblique.ttf</file>
+	</font>
+	<font name="AlibabaSansUI" font_style="BOLD|ITALIC">
+		<file>NotoSans-BoldItalic.otf</file>
+		<file>DejaVuSans-BoldOblique.ttf</file>
+	</font>
+	<font_size name="Huge"   size="16.0" />
+	<font_size name="Large"  size="11.4" />
+	<font_size name="Medium" size="9.4" />
+	<font_size name="Small"  size="8.4" />
+
 </fonts>
