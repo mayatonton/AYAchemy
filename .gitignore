@@ -86,3 +86,4 @@ web/secondlife.com.*
 /Pipfile.lock
 .env
 .vscode
+fmodstudio/
