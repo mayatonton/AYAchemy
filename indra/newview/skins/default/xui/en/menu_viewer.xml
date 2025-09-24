@@ -4818,6 +4818,10 @@ function="World.EnvPreset"
             <menu_item_check.on_click
              function="Advanced.ToggleViewAdminOptions" />
         </menu_item_check>
+      <menu_item_call name="CheckTexture" label="Check Texture">
+      <on_click function="CheckTexture"/>
+      <on_enable function="EnableCheckTexture"/>
+      </menu_item_call>
     </menu>
     <menu
      create_jump_keys="true"
