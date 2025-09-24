@@ -17,6 +17,13 @@
          function="Url.SendIM" />        
     </menu_item_call>
     <menu_item_call
+      label="Offer Teleport"
+      layout="topleft"
+      name="offer_teleport">
+         <on_click function="Avatar.OfferTeleport"/>
+         <on_enable function="Avatar.CanOfferTeleport"/>
+   </menu_item_call>
+    <menu_item_call
      label="Add Friend..."
      layout="topleft"
      name="add_friend">

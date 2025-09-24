@@ -160,6 +160,24 @@
 #include "rlvhandler.h"
 #include "rlvlocks.h"
 // [/RLVa:KB]
+#include "llviewerobject.h"
+#include "lltextureentry.h"
+#include "llmaterial.h"
+#include "llgltfmaterial.h"
+#include "llviewertexture.h"
+#include "llviewertexturelist.h"
+#include "llimagepng.h"
+#include "lldirpicker.h"
+#include "llfile.h"
+#include "llformat.h"
+#include "llerror.h"
+#include "lleventtimer.h"
+#include <set>
+#include "llviewercontrol.h"
+#include "llmenugl.h"
+#include "llviewerwindow.h"
+#include <boost/bind.hpp>
+using boost::placeholders::_2;
 
 #include <boost/unordered/unordered_flat_map.hpp>
 
@@ -9990,6 +10008,396 @@ void show_topinfobar_context_menu(LLView* ctrl, S32 x, S32 y)
     LLMenuGL::showPopup(ctrl, show_topbarinfo_context_menu, x, y);
 }
 
+
+static std::vector<LLPointer<LLViewerFetchedTexture>>& hold_textures()
+{
+    static std::vector<LLPointer<LLViewerFetchedTexture>> s;
+    return s;
+}
+class LLCheckTextureNudger : public LLEventTimer
+{
+public:
+    LLCheckTextureNudger() : LLEventTimer(0.2f) {} // 0.2秒周期
+
+    // LLEventTimer::tick は BOOL 戻り値
+    // FALSE を返すと継続、TRUE でタイマー停止
+    BOOL tick() override
+    {
+        auto& pend = pending_ids();
+        if (pend.empty())
+        {
+            return TRUE; // 何もなければ停止
+        }
+
+        for (const LLUUID& id : pend)
+        {
+            LLPointer<LLViewerFetchedTexture> tex =
+                LLViewerTextureManager::getFetchedTexture(id, FTT_DEFAULT, TRUE, LLGLTexture::BOOST_SELECTED);
+            if (tex)
+            {
+                tex->setBoostLevel(LLGLTexture::BOOST_SELECTED);
+                tex->setMinDiscardLevel(0);
+                tex->forceToSaveRawImage(0);
+                tex->addTextureStats(4096.f * 4096.f);
+            }
+        }
+        return FALSE; // 継続
+    }
+
+    static std::set<LLUUID>& pending_ids()
+    {
+        static std::set<LLUUID> s;
+        return s;
+    }
+
+    static LLCheckTextureNudger* instance()
+    {
+        static LLCheckTextureNudger* inst = nullptr;
+        if (!inst) inst = new LLCheckTextureNudger();
+        return inst;
+    }
+};
+class LLCheckTextureExporter : public view_listener_t
+{
+public:
+    bool handleEvent(const LLSD& userdata) override
+    {
+        std::vector<FaceTex> items;
+        gather_selection_textures(items);
+        if (items.empty())
+        {
+            LLNotificationsUtil::add("GenericAlert", LLSD().with("MESSAGE", "No textures found in selection."));
+            return true;
+        }
+
+        std::string out_dir;
+        if (!pick_output_dir(out_dir))
+        {
+            // キャンセル時は何もせず終了（通知も控えめにするなら下行を消す）
+            LL_INFOS("CheckTexture") << "Folder picker canceled or failed" << LL_ENDL;
+            return true;
+        }
+
+        LL_INFOS("CheckTexture") << "Saving to: " << out_dir << LL_ENDL;
+        // 必要なら通知
+        // LLNotificationsUtil::add("GenericAlert", LLSD().with("MESSAGE", std::string("Saving to: ") + out_dir));
+
+        fetch_and_save_all(items, out_dir);
+
+        // 必要なら通知
+        // LLNotificationsUtil::add("GenericAlert", LLSD().with("MESSAGE", "CheckTexture: export started."));
+        return true;
+    }
+private:
+    struct FaceTex
+    {
+        LLUUID id;
+        std::string file_stub; // 例: ObjectName_L1_F3_BaseColor
+    };
+
+    static std::string sanitize_filename(std::string name)
+    {
+        if (name.empty()) name = "Object";
+        // NG 文字をアンダースコアに
+        static const char* ng = "\\/:*?\"<>|\t\r\n";
+        for (const char* p = ng; *p; ++p)
+        {
+            std::replace(name.begin(), name.end(), *p, '_');
+        }
+        // 制御文字も除去
+        for (char& c : name)
+        {
+            if (static_cast<unsigned char>(c) < 0x20) c = '_';
+        }
+        return name;
+    }
+
+    static void gather_selection_textures(std::vector<FaceTex>& out)
+    {
+        LLObjectSelectionHandle sel = LLSelectMgr::getInstance()->getSelection();
+        if (!sel || sel->getObjectCount() == 0) return;
+
+        std::set<LLUUID> processed_roots;
+
+        for (LLObjectSelection::iterator it = sel->begin(); it != sel->end(); ++it)
+        {
+            LLSelectNode* node = *it;
+            if (!node) continue;
+
+            LLViewerObject* any_obj = node->getObject();
+            if (!any_obj) continue;
+
+            // リンクセット全体を対象
+            LLViewerObject* root = any_obj->getRootEdit();
+            if (!root) root = any_obj;
+
+            // 同じリンクセットを二重処理しない
+            if (!processed_roots.insert(root->getID()).second)
+            {
+                continue;
+            }
+
+            auto process_object = [&](LLViewerObject* obj)
+            {
+                if (!obj) return;
+
+                // オブジェクト名は UUID 先頭8桁で安定化
+                std::string obj_name = "obj_" + obj->getID().asString().substr(0, 8);
+                obj_name = sanitize_filename(obj_name);
+
+                const S32 face_count = obj->getNumTEs();
+                for (S32 f = 0; f < face_count; ++f)
+                {
+                    LLTextureEntry* te = obj->getTE(f);
+                    if (!te) continue;
+
+                    // 例: obj_ab12cd34_F3_diffuse.png
+                    const std::string base = llformat("%s_F%d_", obj_name.c_str(), f);
+
+                    // 旧（非PBR）
+                    const LLUUID diffuse = te->getID();
+                    if (diffuse.notNull())
+                    {
+                        out.push_back({ diffuse, base + "diffuse" });
+                    }
+
+                    LLMaterialPtr mparams = te->getMaterialParams();
+                    if (mparams.notNull())
+                    {
+                        const LLUUID normal   = mparams->getNormalID();
+                        const LLUUID specular = mparams->getSpecularID();
+                        if (normal.notNull())   out.push_back({ normal,   base + "normal" });
+                        if (specular.notNull()) out.push_back({ specular, base + "specular" });
+                    }
+
+                    // PBR（glTF）: mTextureId[] から直接取得
+                    LLPointer<LLGLTFMaterial> pbr = te->getGLTFMaterial();
+                    if (pbr.notNull())
+                    {
+                        auto add_if = [&](const LLUUID& id, const char* tag)
+                        {
+                            if (id.notNull()) out.push_back({ id, base + tag });
+                        };
+
+                        add_if(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_BASE_COLOR],         "BaseColor");
+                        add_if(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_METALLIC_ROUGHNESS], "MetallicRoughness");
+                        add_if(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_EMISSIVE],           "Emissive");
+                        add_if(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_NORMAL],             "Normal");
+                    }
+                }
+            };
+
+            // ルート＋子プリムすべて処理
+            process_object(root);
+            const LLViewerObject::child_list_t& children = root->getChildren();
+            for (LLViewerObject::child_list_t::const_iterator ci = children.begin(); ci != children.end(); ++ci)
+            {
+                process_object(*ci);
+            }
+        }
+    }
+
+    static bool ensure_dir_exists(const std::string& dir)
+    {
+        if (LLFile::isdir(dir)) return true;
+        S32 rc = LLFile::mkdir(dir);
+        return (rc == 0) || LLFile::isdir(dir);
+    }
+
+    static bool pick_output_dir(std::string& out_dir)
+    {
+        LLDirPicker& picker = LLDirPicker::instance();
+
+        std::string chosen;
+        BOOL ok = picker.getDir(&chosen); // ブロッキングでフォルダ選択
+
+        // キャンセル/失敗は即中断（ここで getDirName は見ない）
+        if (!ok)
+        {
+            return false;
+        }
+
+        // 取得方法がプラットフォームで異なることがあるため補助的に getDirName も参照
+        std::string sel = chosen;
+        if (sel.empty())
+        {
+            sel = picker.getDirName();
+        }
+        if (sel.empty())
+        {
+            // まれに OK でも空文字が返る場合、中断
+            return false;
+        }
+
+        out_dir = sel;
+        return true;
+    }
+
+    struct Job
+    {
+        std::string filepath;
+        LLUUID id;
+        bool saved = false;
+    };
+
+    static void fetch_and_save_all(const std::vector<FaceTex>& list, const std::string& dir)
+    {
+        for (const auto& e : list)
+        {
+            std::string path = gDirUtilp->add(dir, e.file_stub + ".png");
+
+            LLPointer<LLViewerFetchedTexture> tex =
+                LLViewerTextureManager::getFetchedTexture(e.id, FTT_DEFAULT, TRUE, LLGLTexture::BOOST_SELECTED);
+            if (!tex)
+            {
+                LL_WARNS("CheckTexture") << "getFetchedTexture failed: " << e.id << LL_ENDL;
+                continue;
+            }
+
+            // 高優先度・原寸要求・Raw保持
+            tex->setBoostLevel(LLGLTexture::BOOST_SELECTED);
+            tex->setMinDiscardLevel(0);
+            tex->forceToSaveRawImage(0);
+            tex->addTextureStats(4096.f * 4096.f);
+
+            // コールバック登録（原寸Rawが来るまで粘る）
+            Job* job = new Job{ path, e.id, false /*saved*/ };
+            tex->setLoadedCallback(
+                &LLCheckTextureExporter::on_texture_loaded,
+                0,      // 0=原寸が来たら呼ぶ
+                TRUE,   // keep_imageraw
+                FALSE,  // needs_aux は FALSE（TRUEだとAUX無しで止まることがある）
+                job,
+                NULL
+            );
+
+            // 保持＋ナッジ登録
+            hold_textures().push_back(tex);
+            LLCheckTextureNudger::pending_ids().insert(e.id);
+            LLCheckTextureNudger::instance(); // タイマー起動
+
+            LL_INFOS("CheckTexture") << "Requesting decode id=" << e.id << " -> " << path << LL_ENDL;
+        }
+    }
+
+    static void on_texture_loaded(BOOL success,
+                                LLViewerFetchedTexture* src,
+                                LLImageRaw* raw,
+                                LLImageRaw* aux,
+                                S32 discard_level,
+                                BOOL is_final,
+                                void* userdata)
+    {
+        Job* job = static_cast<Job*>(userdata);
+
+        const S32 rw = (raw ? raw->getWidth() : -1);
+        const S32 rh = (raw ? raw->getHeight() : -1);
+
+        LL_INFOS("CheckTexture") << "on_texture_loaded id=" << (job ? job->id.asString() : "null-job")
+                                << " success=" << success
+                                << " final=" << is_final
+                                << " discard=" << discard_level
+                                << " raw=" << (raw ? "yes" : "no")
+                                << " size=" << rw << "x" << rh
+                                << LL_ENDL;
+
+        // 原寸が来たときだけ保存（discard_level==0）
+        if (success && src && raw && job && !job->saved && discard_level == 0)
+        {
+            LLPointer<LLImagePNG> png = new LLImagePNG;
+            if (png.notNull() && png->encode(raw, 0))
+            {
+                if (!job->filepath.empty())
+                {
+                    if (LLFILE* fp = LLFile::fopen(job->filepath, "wb"))
+                    {
+                        fwrite(png->getData(), 1, png->getDataSize(), fp);
+                        fclose(fp);
+                        job->saved = true;
+                        LL_INFOS("CheckTexture") << "Saved: " << job->filepath << LL_ENDL;
+                    }
+                    else
+                    {
+                        LL_WARNS("CheckTexture") << "Cannot open: " << job->filepath << LL_ENDL;
+                    }
+                }
+            }
+        }
+
+        if (is_final)
+        {
+            // 保持解除
+            auto& hold = hold_textures();
+            hold.erase(std::remove_if(hold.begin(), hold.end(),
+                [&](const LLPointer<LLViewerFetchedTexture>& t){ return job && t->getID() == job->id; }),
+                hold.end());
+
+            // ペンディング解除
+            LLCheckTextureNudger::pending_ids().erase(job ? job->id : LLUUID::null);
+
+            delete job;
+        }
+    }
+};
+class LLCheckTextureEnable : public view_listener_t
+{
+public:
+    bool handleEvent(const LLSD&) override
+    {
+        LLObjectSelectionHandle sel = LLSelectMgr::getInstance()->getSelection();
+        return sel && sel->getObjectCount() > 0;
+    }
+};
+class LLCheckTextureMenuGate
+{
+public:
+    // 見つかって適用できたら true, 見つからなければ false
+    static bool apply(bool visible)
+    {
+        if (!gViewerWindow) return false;
+        LLView* root = gViewerWindow->getRootView();
+        if (!root) return false;
+
+        LLMenuGL* develop = root->findChild<LLMenuGL>("Develop", TRUE);
+        if (!develop)
+        {
+            develop = root->findChild<LLMenuGL>("Developer", TRUE);
+        }
+        if (!develop) return false;
+
+        LLView* item_view = develop->findChild<LLView>("CheckTexture", TRUE);
+        if (!item_view) return false;
+
+        item_view->setVisible(visible);
+        develop->arrange(); // 再レイアウト
+        return true;
+    }
+
+    static void onSettingChanged(const LLSD& new_value)
+    {
+        // 設定変更時は即適用（メニューがまだなら後述のタイマーが拾う）
+        apply(new_value.asBoolean());
+    }
+};
+class LLCheckTextureMenuGateTimer : public LLEventTimer
+{
+public:
+    LLCheckTextureMenuGateTimer()
+    : LLEventTimer(0.5f) // 0.5秒毎に試行
+    {}
+
+    // TRUE を返すと停止、FALSE で継続
+    BOOL tick() override
+    {
+        const bool want_visible = gSavedSettings.getBOOL("Mode_34");
+        if (LLCheckTextureMenuGate::apply(want_visible))
+        {
+            return TRUE; // 反映できたので停止
+        }
+        return FALSE; // まだ見つからない→次回
+    }
+};
+
 namespace
 {
     bool always_disable_menu()
@@ -10580,8 +10988,16 @@ void initialize_menus()
     enable.add("RLV.EnableIfNot", boost::bind(&rlvMenuEnableIfNot, _2));
 // [/RLVa:KB]
 
-    commit.add("Camera.SavePosition", [](LLUICtrl* ctrl, const LLSD& param) { gAgentCamera.storeCameraPosition(); });
-    commit.add("Camera.RestorePosition", [](LLUICtrl* ctrl, const LLSD& param) { gAgentCamera.loadCameraPosition(); });
+    view_listener_t::addMenu(new LLCheckTextureExporter(), "CheckTexture");
+    view_listener_t::addMenu(new LLCheckTextureEnable(),   "EnableCheckTexture");
+    if (!LLCheckTextureMenuGate::apply(gSavedSettings.getBOOL("Mode_34")))
+    {
+        new LLCheckTextureMenuGateTimer();
+    }
+    if (LLControlVariable* ctrl = gSavedSettings.getControl("Mode_34"))
+    {
+        ctrl->getSignal()->connect(boost::bind(&LLCheckTextureMenuGate::onSettingChanged, _2));
+    }
 
     ALViewerMenu::initialize_menus();
 }
