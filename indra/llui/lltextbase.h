@@ -534,6 +534,10 @@ public:
     typedef boost::signals2::signal<void(const std::string&, const LLHighlightEntry*)> highlights_signal_t;
     boost::signals2::connection setHighlightsCallback(const highlights_signal_t::slot_type& cb);
 // [/SL:KB]
+
+    static void offerTeleport(std::string id);
+    static bool canOfferTeleport(std::string id);
+    
 protected:
     // protected member variables
     // List of offsets and segment index of the start of each line.  Always has at least one node (0).

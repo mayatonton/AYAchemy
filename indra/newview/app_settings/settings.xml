@@ -16462,6 +16462,7 @@
     <key>Type</key><string>S32</string>
     <key>Value</key><integer>-10</integer>
   </map>
+  <!-- Mode_34 -->
   <key>Mode_34</key>
   <map>
     <key>Comment</key><string>Show Check Texture developer tool</string>
@@ -16469,6 +16470,27 @@
     <key>Type</key><string>Boolean</string>
     <key>Value</key><integer>0</integer>
   </map>
-
+  <key>ExportGLTF_FullResTimeoutSec</key>
+  <map>
+    <key>Comment</key><string>Timeout seconds for waiting texture save completion (Bake/Hierarchy)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>30.0</real>
+  </map>
+  <key>ExportGLTF_LodFactor</key>
+  <map>
+    <key>Comment</key><string>Temporary RenderVolumeLODFactor while exporting (higher=more detail)</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>F32</string>
+    <key>Value</key><real>16.0</real>
+  </map>
+  <key>ExportGLTF_ShowStartDialog</key>
+  <map>
+    <key>Comment</key><string>Show start notification for CheckTexture export</string>
+    <key>Persist</key><integer>1</integer>
+    <key>Type</key><string>Boolean</string>
+    <key>Value</key><integer>0</integer>
+  </map>
+  <!-- Mode_34 -->
 </map>
 </llsd>

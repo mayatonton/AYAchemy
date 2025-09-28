@@ -172,12 +172,21 @@
 #include "llformat.h"
 #include "llerror.h"
 #include "lleventtimer.h"
+#include <vector>
 #include <set>
+#include <map>
+#include <algorithm>
 #include "llviewercontrol.h"
 #include "llmenugl.h"
 #include "llviewerwindow.h"
 #include <boost/bind.hpp>
 using boost::placeholders::_2;
+#include "llvovolume.h"     // LLVOVolume, LLVolumeFace
+#include "tinygltf/tiny_gltf.h"
+#include "lltimer.h"
+#include "llquaternion.h"  // LLQuaternion
+#include "v3math.h"        // LLVector3::x_axis / z_axis
+#include "llmath.h"        // F_PI（PI 定数）
 
 #include <boost/unordered/unordered_flat_map.hpp>
 
@@ -10008,26 +10017,813 @@ void show_topinfobar_context_menu(LLView* ctrl, S32 x, S32 y)
     LLMenuGL::showPopup(ctrl, show_topbarinfo_context_menu, x, y);
 }
 
+// =======================================
+// AYAchemy CheckTexture + glTF Export (fixed)
+// ポイント
+// - 頂点は一切変換しない（オブジェクト空間のまま）
+// - ノードのTRSは root 相対（render系で取得し root を相殺）
+// - 角度の取り扱い：LLQuaternion::mQ は [x,y,z,w]。glTF も [x,y,z,w] なのでそのまま渡す
+// - per-node 軸補正は無効（必要ならシーン直下に一括で入れられるフックは残すが既定OFF）
+// =======================================
 
+// 公開型: 面に貼られていたテクスチャ情報（グローバル）
+struct FaceTex
+{
+    LLUUID id;                 // テクスチャUUID
+    std::string file_stub;     // 例: obj_abcd1234_F3_BaseColor
+    LLUUID object_id;          // オブジェクトUUID
+    S32 face = -1;             // フェイス番号
+    std::string kind;          // "Diffuse"/"Specular"/"Normal" or "BaseColor"/"MetallicRoughness"/"Emissive"/"Normal"
+};
+
+struct Job
+{
+    LLUUID id;
+    std::vector<std::string> out_paths;
+    bool saved = false;
+
+    // これまでに到達した最良のディスカードと解像度
+    S32 best_discard = S32_MAX;
+    S32 best_w = 0;
+    S32 best_h = 0;
+};
+
+// glTF 軸補正ヘルパー（前方宣言）
+static LLQuaternion get_gltf_axis_fix_quat();
+static bool is_axis_fix_enabled();
+
+static LLQuaternion get_gltf_axis_fix_quat()
+{
+    const F32 deg2rad = F_PI / 180.f;
+    LLQuaternion qx(-90.f * deg2rad, LLVector3::x_axis); // X -90°
+    LLQuaternion qz(+90.f * deg2rad, LLVector3::z_axis); // Z +90°
+    return qz * qx; // 適用順: 先にX → 次にZ
+}
+
+// 軸補正は一切使わない（必要になれば true にして、シーン直下に一括で入れる）
+static bool is_axis_fix_enabled()
+{
+    return false;
+}
+
+// 前方宣言
+static std::set<LLUUID> prepare_jobs_and_fetch(const std::vector<FaceTex>& faces, const std::string& dir);
+
+struct Selection;  // 後で定義
+static bool write_gltf(Selection& sel, const std::string& out_dir);
+static bool write_gltf_bake(Selection& sel, const std::string& out_dir);
+
+// ===== glTF 出力用 構造体 =====
+struct GLTFFaceGeom
+{
+    std::vector<float>   positions;  // x,y,z
+    std::vector<float>   normals;    // x,y,z
+    std::vector<float>   uvs;        // u,v
+    std::vector<uint32_t> indices;
+    LLUUID basecolor;
+    LLUUID orm;       // MetallicRoughness
+    LLUUID emissive;
+    LLUUID normal;
+};
+
+struct GLTFNode
+{
+    LLUUID id;
+    LLUUID parent;         // null = ルート
+    std::string name;
+
+    // ルート相対（ヒエラルキーモード用に残す）
+    LLVector3    pos;
+    LLQuaternion rot;
+    LLVector3    scale;
+
+    // 追加: Bake 用のワールド TRS
+    LLVector3    wpos;     // obj->getRenderPosition()
+    LLQuaternion wrot;     // obj->getRenderRotation()
+    LLVector3    wscale;   // obj->getScale()
+
+    // 任意: リンク番号（root=1, 子=2..）
+    S32          link_index = 0;
+
+    std::vector<GLTFFaceGeom> faces;
+};
+
+struct Selection
+{
+    std::vector<GLTFNode> nodes;
+    std::set<LLUUID>      used_texture_ids;
+};
+
+// 保存完了監視セッション（非ブロッキング）
+class LLCheckTextureSession : public LLEventTimer
+{
+public:
+    static LLCheckTextureSession* s_inst;
+
+    static void start(const std::string& out_dir,
+                      const Selection& sel,
+                      const std::set<LLUUID>& wait_ids,
+                      F32 timeout_sec)
+    {
+        stop();
+        s_inst = new LLCheckTextureSession(out_dir, sel, wait_ids, timeout_sec);
+    }
+
+    static void stop()
+    {
+        if (s_inst)
+        {
+            delete s_inst;
+            s_inst = nullptr;
+        }
+    }
+
+    // 保存成功（on_texture_loaded から呼ぶ）
+    static void markSaved(const LLUUID& id)
+    {
+        if (!s_inst) return;
+        s_inst->m_saved.insert(id);
+    }
+
+private:
+    LLCheckTextureSession(const std::string& out_dir,
+                          const Selection& sel,
+                          const std::set<LLUUID>& wait_ids,
+                          F32 timeout_sec)
+    : LLEventTimer(0.2f) // 200ms
+    , m_out_dir(out_dir)
+    , m_sel(sel)
+    , m_wait(wait_ids.begin(), wait_ids.end())
+    , m_timeout(timeout_sec)
+    {
+        m_timer.reset();
+    }
+
+    ~LLCheckTextureSession() override {}
+
+    BOOL tick() override
+    {
+        // 全ID保存完了したか？
+        bool all = true;
+        for (const LLUUID& id : m_wait)
+        {
+            if (m_saved.find(id) == m_saved.end())
+            {
+                all = false;
+                break;
+            }
+        }
+
+        if (all)
+        {
+            // glTF 書き出し（外部参照）
+            // if (write_gltf(m_sel, m_out_dir))
+            if (write_gltf_bake(m_sel, m_out_dir))
+            {
+                LLNotificationsUtil::add("GenericAlert",
+                    LLSD().with("MESSAGE", "CheckTexture: textures saved and glTF written."));
+            }
+            else
+            {
+                LLNotificationsUtil::add("GenericAlert",
+                    LLSD().with("MESSAGE", "CheckTexture: glTF export failed."));
+            }
+            LLCheckTextureSession::s_inst = nullptr; // マークのみ
+            return TRUE; // LLEventTimer に解放させる
+        }
+
+        // タイムアウト
+        if (m_timer.getElapsedTimeF32() > m_timeout)
+        {
+            std::string msg = llformat("Timeout: textures not saved within %.1fs. Export aborted.", m_timeout);
+            LLNotificationsUtil::add("GenericAlert", LLSD().with("MESSAGE", msg));
+            LLCheckTextureSession::s_inst = nullptr; // マークのみ
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+private:
+    std::string m_out_dir;
+    Selection   m_sel;
+    std::set<LLUUID> m_wait;
+    std::set<LLUUID> m_saved;
+    F32         m_timeout;
+    LLTimer     m_timer;
+};
+LLCheckTextureSession* LLCheckTextureSession::s_inst = nullptr;
+
+static S32 get_min_tex_side()
+{
+    if (LLControlVariable* c = gSavedSettings.getControl("ExportGLTF_MinSavedTexSize"))
+    {
+        S32 v = gSavedSettings.getS32("ExportGLTF_MinSavedTexSize");
+        return llclamp(v, 1, 4096);
+    }
+    return 512; // 既定
+}
+
+// PBRテクスチャIDの正規化
+static LLUUID resolve_pbr_texture_id(const LLPointer<LLGLTFMaterial>& pbr, const LLUUID& in)
+{
+    if (!pbr.notNull() || in.isNull()) return LLUUID::null;
+    if (in == LLGLTFMaterial::GLTF_OVERRIDE_NULL_UUID) return LLUUID::null;
+
+    const auto& map = pbr->mTrackingIdToLocalTexture; // tracking_id -> tex_id
+    auto it = map.find(in);
+    if (it != map.end()) return it->second;
+
+    return in;
+}
+
+// ===== 選択から glTF 用データ収集 =====
+static Selection collect_selection_for_gltf()
+{
+    Selection sel;
+    auto selection = LLSelectMgr::getInstance()->getSelection();
+    if (!selection || selection->getObjectCount() == 0) return sel;
+
+    std::set<LLUUID> processed_roots;
+
+    for (LLObjectSelection::iterator it = selection->begin(); it != selection->end(); ++it)
+    {
+        LLSelectNode* sn = *it;
+        if (!sn) continue;
+
+        LLViewerObject* any = sn->getObject();
+        if (!any) continue;
+
+        LLViewerObject* root = any->getRootEdit();
+        if (!root) root = any;
+
+        if (!processed_roots.insert(root->getID()).second) continue;
+
+        // root の world TRS
+        const LLVector3    root_p = root->getRenderPosition();
+        const LLQuaternion root_r = root->getRenderRotation();
+        const LLQuaternion inv_root = ~root_r;
+
+        // リンク番号カウンタ（root=1）
+        S32 link_counter = 1;
+
+        auto add_object = [&](LLViewerObject* obj, const LLUUID& parent_id, S32 link_idx)
+        {
+            if (!obj) return;
+
+            LLVOVolume* vobj = dynamic_cast<LLVOVolume*>(obj);
+            if (!vobj) return;
+
+            LLVolume* vol = vobj->getVolume();
+            if (!vol) return;
+
+            const bool is_root = (obj == root);
+
+            // world TRS
+            const LLVector3    wp = obj->getRenderPosition();
+            const LLQuaternion wr = obj->getRenderRotation();
+            const LLVector3    ws = obj->getScale();
+
+            // root相対（既存どおり）
+            LLVector3    local_pos = (wp - root_p) * inv_root;
+            LLQuaternion local_rot = inv_root * wr;
+
+            GLTFNode n;
+            n.id     = obj->getID();
+            n.parent = parent_id;
+            // 先頭にリンク番号（2桁）を付与
+            n.name   = llformat("%02d_", link_idx) + "obj_" + obj->getID().asString().substr(0,8);
+            n.pos    = local_pos;
+            n.rot    = local_rot;
+            n.scale  = ws;
+            n.link_index = link_idx;
+            // world TRS を Bake 用に保持
+            n.wpos   = obj->getRenderPosition();
+            n.wrot   = obj->getRenderRotation();
+            n.wscale = obj->getScale();
+
+            // if (is_root)
+            // {
+            //     n.anchor_world_pos = root_p;
+            //     n.anchor_world_rot = root_r;
+            // }
+
+            // フェイス（頂点は未変換、既存処理のまま）
+            const S32 face_count = vobj->getNumTEs();
+            for (S32 f = 0; f < face_count; ++f)
+            {
+                const LLVolumeFace& vf = vol->getVolumeFace(f);
+                if (vf.mNumVertices == 0 || vf.mNumIndices == 0) continue;
+
+                GLTFFaceGeom g;
+                g.positions.reserve(vf.mNumVertices * 3);
+                g.normals.reserve(vf.mNumVertices * 3);
+                g.uvs.reserve(vf.mNumVertices * 2);
+                g.indices.reserve(vf.mNumIndices);
+
+                for (S32 i = 0; i < vf.mNumVertices; ++i)
+                {
+                    const LLVector4a& p4 = vf.mPositions[i];
+                    const LLVector4a& n4 = vf.mNormals[i];
+                    const F32* pv = p4.getF32ptr();
+                    const F32* nv = n4.getF32ptr();
+                    const LLVector2& uv = vf.mTexCoords[i];
+
+                    g.positions.push_back(pv[0]); g.positions.push_back(pv[1]); g.positions.push_back(pv[2]);
+                    g.normals.push_back(nv[0]);   g.normals.push_back(nv[1]);   g.normals.push_back(nv[2]);
+                    g.uvs.push_back(uv.mV[0]);    g.uvs.push_back(1.0f - uv.mV[1]);
+                }
+                for (S32 i = 0; i < vf.mNumIndices; ++i)
+                {
+                    g.indices.push_back((uint32_t)vf.mIndices[i]);
+                }
+
+                // マテリアル（既存どおり）
+                LLTextureEntry* te = vobj->getTE(f);
+                if (te)
+                {
+                    if (LLPointer<LLGLTFMaterial> pbr = te->getGLTFMaterial(); pbr.notNull())
+                    {
+                        g.basecolor = resolve_pbr_texture_id(pbr, pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_BASE_COLOR]);
+                        g.orm       = resolve_pbr_texture_id(pbr, pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_METALLIC_ROUGHNESS]);
+                        g.emissive  = resolve_pbr_texture_id(pbr, pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_EMISSIVE]);
+                        g.normal    = resolve_pbr_texture_id(pbr, pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_NORMAL]);
+                    }
+                    else
+                    {
+                        g.basecolor = te->getID();
+                        if (LLMaterialPtr m = te->getMaterialParams(); m.notNull())
+                            g.normal = m->getNormalID();
+                    }
+
+                    auto add_id = [&](const LLUUID& id){ if (id.notNull()) sel.used_texture_ids.insert(id); };
+                    add_id(g.basecolor); add_id(g.orm); add_id(g.emissive); add_id(g.normal);
+                }
+
+                n.faces.push_back(std::move(g));
+            }
+
+            sel.nodes.push_back(std::move(n));
+        };
+
+        // root=1
+        add_object(root, LLUUID::null, link_counter++);
+
+        // children=2..（列挙順）
+        for (LLViewerObject* child : root->getChildren())
+        {
+            add_object(child, root->getID(), link_counter++);
+        }
+    }
+
+    return sel;
+}
+
+// ===== glTF 書き出し（Bake モード）=====
+// Anchor: 原点(0,0,0), Rotation X:-90°, Scale 1
+// 各プリムの positions/normals に (Anchor^-1 * 子のワールドTRS) を焼き込み
+// 各プリムのノードTRSは T=0,R=identity,S=1 にする（Anchor直下にぶら下げる）
+// ===== glTF 書き出し（Bake モード：Anchor=原点/X:-90°、親プリムのワールド原点を0,0,0に再基準化）=====
+static bool write_gltf_bake(Selection& sel, const std::string& out_dir)
+{
+    tinygltf::Model model;
+    model.scenes.emplace_back();
+    model.defaultScene = 0;
+
+    auto image_uri_for = [&](const LLUUID& id) -> std::string
+    {
+        return std::string("textures/") + id.asString() + ".png";
+    };
+
+    // 単一 .bin
+    std::vector<unsigned char> bin;
+    bin.reserve(1 << 20);
+    auto add_buffer = [&](const void* data, size_t bytes) -> size_t {
+        size_t ofs = bin.size();
+        const unsigned char* p = static_cast<const unsigned char*>(data);
+        bin.insert(bin.end(), p, p + bytes);
+        while (bin.size() % 4) bin.push_back(0);
+        return ofs;
+    };
+
+    auto get_image_index = [&](const LLUUID& id) -> int {
+        if (id.isNull()) return -1;
+        std::string uri = image_uri_for(id);
+        for (size_t i=0; i<model.images.size(); ++i)
+            if (model.images[i].uri == uri) return (int)i;
+        tinygltf::Image img; img.uri = uri;
+        model.images.push_back(std::move(img));
+        return (int)model.images.size()-1;
+    };
+
+    auto get_texture_index = [&](const LLUUID& id) -> int {
+        int img_idx = get_image_index(id);
+        if (img_idx < 0) return -1;
+        for (size_t i=0; i<model.textures.size(); ++i)
+            if (model.textures[i].source == img_idx) return (int)i;
+        tinygltf::Texture t; t.source = img_idx;
+        model.textures.push_back(std::move(t));
+        return (int)model.textures.size()-1;
+    };
+
+    // Anchor（原点, X:-90°, S=1）
+    auto quat_xminus90 = []() -> std::array<double,4>
+    {
+        const double rad = -90.0 * 3.14159265358979323846 / 180.0;
+        const double s = std::sin(rad * 0.5);
+        const double c = std::cos(rad * 0.5);
+        // glTF の順序: x, y, z, w
+        return { s, 0.0, 0.0, c };
+    };
+    const auto qx = quat_xminus90();
+
+    tinygltf::Node anchor;
+    anchor.name        = "Anchor_obj";
+    anchor.translation = { 0.0, 0.0, 0.0 };              // 原点
+    anchor.rotation    = { qx[0], qx[1], qx[2], qx[3] }; // X:-90°
+    anchor.scale       = { 1.0, 1.0, 1.0 };
+    const int anchor_idx = (int)model.nodes.size();
+    model.nodes.push_back(std::move(anchor));
+    model.scenes[0].nodes.push_back(anchor_idx);
+
+    // Anchor の逆回転（位置は原点のため回転だけで良い）
+    LLQuaternion q_anchor;           // LL は [x,y,z,w]
+    q_anchor.mQ[0] = (F32)qx[0];
+    q_anchor.mQ[1] = (F32)qx[1];
+    q_anchor.mQ[2] = (F32)qx[2];
+    q_anchor.mQ[3] = (F32)qx[3];
+    LLQuaternion q_anchor_inv = ~q_anchor;
+
+    // root のワールド原点（親プリムの位置）を収集
+    std::map<LLUUID, LLVector3> root_world_origin;
+    for (const GLTFNode& n : sel.nodes)
+        if (n.parent.isNull()) root_world_origin[n.id] = n.wpos;
+
+    auto get_root_id = [&](const GLTFNode& n) -> LLUUID {
+        return n.parent.isNull() ? n.id : n.parent;
+    };
+
+    // すべてのプリムを Anchor の直下に、TRS 恒等で作成。頂点/法線はベイク（root原点=0,0,0）
+    for (const GLTFNode& n : sel.nodes)
+    {
+        // ノード（TRS恒等）
+        tinygltf::Node node;
+        node.name        = n.name;
+        node.translation = { 0.0, 0.0, 0.0 };
+        node.rotation    = { 0.0, 0.0, 0.0, 1.0 };
+        node.scale       = { 1.0, 1.0, 1.0 };
+        const int node_idx = (int)model.nodes.size();
+        model.nodes.push_back(std::move(node));
+        model.nodes[anchor_idx].children.push_back(node_idx);
+
+        if (n.faces.empty())
+            continue;
+
+        tinygltf::Mesh mesh;
+        mesh.name = n.name;
+
+        // ワールドTRS（Bake）
+        const LLVector3    wpos = n.wpos;
+        const LLQuaternion wrot = n.wrot;
+        const LLVector3    wsca = n.wscale;
+
+        // root のワールド原点を取得（これを0,0,0に再基準化）
+        const LLUUID root_id = get_root_id(n);
+        const LLVector3 root_origin = root_world_origin[root_id];
+
+        // 頂点（位置）のベイク：p_world = (pl * S) * R + wpos - root_origin
+        auto transform_position = [&](const GLTFNode& n, const LLVector3& pl) -> LLVector3
+        {
+            const LLUUID    root_id     = get_root_id(n);
+            const LLVector3 root_origin = root_world_origin[root_id];
+
+            LLVector3 p(pl.mV[0] * n.wscale.mV[0],
+                        pl.mV[1] * n.wscale.mV[1],
+                        pl.mV[2] * n.wscale.mV[2]);
+            p = p * n.wrot;     // 回転（vector * quaternion）
+            p += n.wpos;        // 平行移動（ワールド）
+            p -= root_origin;   // 親プリムのワールド位置を原点へオフセット
+            return p;           // Anchor の逆回転は掛けない
+        };
+
+        // 法線のベイク：回転のみ（Anchor の逆回転は掛けない）
+        auto transform_normal = [&](const GLTFNode& n, const LLVector3& nl) -> LLVector3
+        {
+            LLVector3 v = nl * n.wrot;
+            v.normalize();
+            return v;
+        };
+
+        for (const GLTFFaceGeom& gsrc : n.faces)
+        {
+            const auto& pos = gsrc.positions;
+            const auto& nrm = gsrc.normals;
+            const auto& uvs = gsrc.uvs;
+            const auto& idx = gsrc.indices;
+
+            std::vector<float> out_pos; out_pos.reserve(pos.size());
+            std::vector<float> out_nrm; out_nrm.reserve(nrm.size());
+            std::vector<float> out_uvs = uvs;
+
+            for (size_t i=0; i+2<pos.size(); i+=3)
+            {
+                LLVector3 pl(pos[i+0], pos[i+1], pos[i+2]);
+                LLVector3 pw = transform_position(n, pl);
+                out_pos.push_back(pw.mV[0]); out_pos.push_back(pw.mV[1]); out_pos.push_back(pw.mV[2]);
+            }
+            for (size_t i=0; i+2<nrm.size(); i+=3)
+            {
+                LLVector3 nl(nrm[i+0], nrm[i+1], nrm[i+2]);
+                LLVector3 nw = transform_normal(n, nl);
+                out_nrm.push_back(nw.mV[0]); out_nrm.push_back(nw.mV[1]); out_nrm.push_back(nw.mV[2]);
+            }
+
+            // バッファ積み
+            size_t pos_ofs = add_buffer(out_pos.data(), out_pos.size()*sizeof(float));
+            size_t nrm_ofs = add_buffer(out_nrm.data(), out_nrm.size()*sizeof(float));
+            size_t uv_ofs  = add_buffer(out_uvs.data(), out_uvs.size()*sizeof(float));
+            size_t idx_ofs = add_buffer(idx.data(),     idx.size()    *sizeof(uint32_t));
+
+            if (model.buffers.empty()) {
+                tinygltf::Buffer buf; buf.name = "buffer0";
+                model.buffers.push_back(std::move(buf));
+            }
+
+            auto make_bv = [&](size_t ofs, size_t len, int target)->int {
+                tinygltf::BufferView bv;
+                bv.buffer     = 0;
+                bv.byteOffset = ofs;
+                bv.byteLength = len;
+                bv.target     = target;
+                model.bufferViews.push_back(std::move(bv));
+                return (int)model.bufferViews.size()-1;
+            };
+
+            int bv_pos = make_bv(pos_ofs, out_pos.size()*sizeof(float),   TINYGLTF_TARGET_ARRAY_BUFFER);
+            int bv_nrm = make_bv(nrm_ofs, out_nrm.size()*sizeof(float),   TINYGLTF_TARGET_ARRAY_BUFFER);
+            int bv_uv  = make_bv(uv_ofs,  out_uvs.size()*sizeof(float),   TINYGLTF_TARGET_ARRAY_BUFFER);
+            int bv_idx = make_bv(idx_ofs, idx.size()    *sizeof(uint32_t),TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER);
+
+            auto make_acc = [&](int bv, int compType, int type, size_t count,
+                                const double* minv, const double* maxv)->int {
+                tinygltf::Accessor a;
+                a.bufferView    = bv;
+                a.byteOffset    = 0;
+                a.componentType = compType;
+                a.count         = (int)count;
+                a.type          = type;
+                if (minv) a.minValues = { minv[0], minv[1], minv[2] };
+                if (maxv) a.maxValues = { maxv[0], maxv[1], maxv[2] };
+                model.accessors.push_back(std::move(a));
+                return (int)model.accessors.size()-1;
+            };
+
+            // AABB 再計算
+            double bmin[3] = {0,0,0}, bmax[3] = {0,0,0};
+            if (!out_pos.empty())
+            {
+                bmin[0]=bmax[0]=out_pos[0];
+                bmin[1]=bmax[1]=out_pos[1];
+                bmin[2]=bmax[2]=out_pos[2];
+                for (size_t i=3; i<out_pos.size(); i+=3)
+                {
+                    bmin[0]=std::min(bmin[0], (double)out_pos[i+0]);
+                    bmin[1]=std::min(bmin[1], (double)out_pos[i+1]);
+                    bmin[2]=std::min(bmin[2], (double)out_pos[i+2]);
+                    bmax[0]=std::max(bmax[0], (double)out_pos[i+0]);
+                    bmax[1]=std::max(bmax[1], (double)out_pos[i+1]);
+                    bmax[2]=std::max(bmax[2], (double)out_pos[i+2]);
+                }
+            }
+
+            int acc_pos = make_acc(bv_pos, TINYGLTF_COMPONENT_TYPE_FLOAT,        TINYGLTF_TYPE_VEC3,   out_pos.size()/3, bmin, bmax);
+            int acc_nrm = make_acc(bv_nrm, TINYGLTF_COMPONENT_TYPE_FLOAT,        TINYGLTF_TYPE_VEC3,   out_nrm.size()/3, nullptr, nullptr);
+            int acc_uv  = make_acc(bv_uv,  TINYGLTF_COMPONENT_TYPE_FLOAT,        TINYGLTF_TYPE_VEC2,   out_uvs.size()/2, nullptr, nullptr);
+            int acc_idx = make_acc(bv_idx, TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT, TINYGLTF_TYPE_SCALAR, idx.size(),        nullptr, nullptr);
+
+            tinygltf::Primitive prim;
+            prim.indices = acc_idx;
+            prim.attributes["POSITION"]   = acc_pos;
+            prim.attributes["NORMAL"]     = acc_nrm;
+            prim.attributes["TEXCOORD_0"] = acc_uv;
+            prim.mode = TINYGLTF_MODE_TRIANGLES;
+
+            // マテリアル
+            int bc_tex = get_texture_index(gsrc.basecolor);
+            int mr_tex = get_texture_index(gsrc.orm);
+            int n_tex  = get_texture_index(gsrc.normal);
+            int e_tex  = get_texture_index(gsrc.emissive);
+
+            tinygltf::Material m;
+            m.name = n.name;
+            m.pbrMetallicRoughness.baseColorFactor = {1,1,1,1};
+            if (bc_tex >= 0) { m.pbrMetallicRoughness.baseColorTexture.index = bc_tex; m.pbrMetallicRoughness.baseColorTexture.texCoord = 0; }
+            if (mr_tex >= 0) { m.pbrMetallicRoughness.metallicRoughnessTexture.index = mr_tex; m.pbrMetallicRoughness.metallicRoughnessTexture.texCoord = 0;
+                               m.occlusionTexture.index = mr_tex; m.occlusionTexture.texCoord = 0; }
+            if (n_tex  >= 0) { m.normalTexture.index = n_tex; m.normalTexture.texCoord = 0; }
+            if (e_tex  >= 0) { m.emissiveTexture.index = e_tex; m.emissiveTexture.texCoord = 0; m.emissiveFactor = {1,1,1}; }
+
+            model.materials.push_back(std::move(m));
+            prim.material = (int)model.materials.size() - 1;
+
+            mesh.primitives.push_back(std::move(prim));
+        }
+
+        if (!mesh.primitives.empty())
+        {
+            int midx = (int)model.meshes.size();
+            model.meshes.push_back(std::move(mesh));
+            model.nodes[node_idx].mesh = midx;
+        }
+    }
+
+    // バッファ反映（外部 .bin）
+    if (model.buffers.empty())
+    {
+        tinygltf::Buffer buf; buf.name = "buffer0";
+        model.buffers.push_back(std::move(buf));
+    }
+    model.buffers[0].data = std::move(bin);
+    model.buffers[0].uri  = "export.bin";
+
+    // 書き出し（外部参照）
+    tinygltf::TinyGLTF gltf;
+    std::string gltf_path = gDirUtilp->add(out_dir, "export.gltf");
+    bool ok = gltf.WriteGltfSceneToFile(&model, gltf_path,
+                                        /*embedImages*/ false,
+                                        /*embedBuffers*/ false,
+                                        /*prettyPrint*/ true,
+                                        /*writeBinary*/ false);
+    return ok;
+}
+
+// テクスチャ参照保持（コールバックが来るまで生かしておく）
 static std::vector<LLPointer<LLViewerFetchedTexture>>& hold_textures()
 {
     static std::vector<LLPointer<LLViewerFetchedTexture>> s;
     return s;
 }
+
+// 一時的に RenderVolumeLODFactor を引き上げるガード
+class LLRenderVolumeLODGuard
+{
+public:
+    explicit LLRenderVolumeLODGuard(F32 new_factor)
+    : m_has_ctrl(false), m_old(0.0f)
+    {
+        if (LLControlVariable* c = gSavedSettings.getControl("RenderVolumeLODFactor"))
+        {
+            m_has_ctrl = true;
+            m_old = gSavedSettings.getF32("RenderVolumeLODFactor");
+            gSavedSettings.setF32("RenderVolumeLODFactor", new_factor);
+        }
+    }
+    ~LLRenderVolumeLODGuard()
+    {
+        if (m_has_ctrl)
+        {
+            gSavedSettings.setF32("RenderVolumeLODFactor", m_old);
+        }
+    }
+private:
+    bool m_has_ctrl;
+    F32  m_old;
+};
+
+// 三角形数を数えるヘルパ
+static U64 count_triangles_llvovolume(LLVOVolume* vobj)
+{
+    if (!vobj) return 0;
+    LLVolume* vol = vobj->getVolume();
+    if (!vol) return 0;
+    U64 tris = 0;
+    const S32 face_count = vobj->getNumTEs();
+    for (S32 f = 0; f < face_count; ++f)
+    {
+        const LLVolumeFace& vf = vol->getVolumeFace(f);
+        if (vf.mNumIndices > 2)
+            tris += (U64)(vf.mNumIndices / 3);
+    }
+    return tris;
+}
+
+// すべてのターゲット（root＋children）で「非0三角形かつ2回連続同数」になるまで待機
+static void force_highest_lod_on_selection(F32 timeout_sec, F32 poll_ms = 100.0f)
+{
+    LLObjectSelectionHandle sel = LLSelectMgr::getInstance()->getSelection();
+    if (!sel || sel->getObjectCount() == 0) return;
+
+    std::set<LLUUID> processed_roots;
+
+    struct TargetState
+    {
+        LLVOVolume* v = nullptr;
+        U64 last = 0;
+        S32 stable = 0;
+        bool ready = false;
+    };
+
+    std::vector<TargetState> targets;
+    targets.reserve(32);
+
+    auto add_if_volume = [&](LLViewerObject* o)
+    {
+        if (!o) return;
+        if (LLVOVolume* v = dynamic_cast<LLVOVolume*>(o))
+        {
+            targets.push_back(TargetState{ v, 0, 0, false });
+        }
+    };
+
+    for (LLObjectSelection::iterator it = sel->begin(); it != sel->end(); ++it)
+    {
+        LLSelectNode* node = *it;
+        if (!node) continue;
+
+        LLViewerObject* any = node->getObject();
+        if (!any) continue;
+
+        LLViewerObject* root = any->getRootEdit();
+        if (!root) root = any;
+
+        if (!processed_roots.insert(root->getID()).second) continue;
+
+        add_if_volume(root);
+        const LLViewerObject::child_list_t& children = root->getChildren();
+        for (LLViewerObject::child_list_t::const_iterator ci = children.begin(); ci != children.end(); ++ci)
+        {
+            add_if_volume(*ci);
+        }
+    }
+
+    if (targets.empty()) return;
+
+    // 一斉に REBUILD をキック
+    for (auto& st : targets)
+    {
+        if (st.v && st.v->mDrawable.notNull())
+        {
+            gPipeline.markRebuild(st.v->mDrawable.get(), LLDrawable::REBUILD_ALL);
+        }
+    }
+
+    // 各ターゲットごとに安定判定
+    LLTimer timer;
+    S32 tick = 0;
+    while (timer.getElapsedTimeF32() < timeout_sec)
+    {
+        bool all_ready = true;
+
+        for (auto& st : targets)
+        {
+            if (!st.v) continue;
+
+            U64 tris = count_triangles_llvovolume(st.v);
+            if (tris > 0)
+            {
+                if (tris == st.last) st.stable++;
+                else { st.stable = 1; st.last = tris; }
+                if (st.stable >= 3) // ← 2 から 3 に強化
+                    st.ready = true;
+            }
+            else
+            {
+                st.stable = 0;
+                st.last = 0;
+                st.ready = false;
+            }
+
+            if (!st.ready)
+                all_ready = false;
+        }
+
+        if (all_ready) break;
+
+        // ときどき再キック（~500ms毎）
+        if ((++tick % 5) == 0)
+        {
+            for (auto& st : targets)
+            {
+                if (st.v && st.v->mDrawable.notNull())
+                {
+                    gPipeline.markRebuild(st.v->mDrawable.get(), LLDrawable::REBUILD_ALL);
+                }
+            }
+        }
+
+        ms_sleep((U32)llmax(1.f, poll_ms));
+    }
+}
+
+// 原寸まで引き上げるナッジタイマー（0.2秒周期）
 class LLCheckTextureNudger : public LLEventTimer
 {
 public:
-    LLCheckTextureNudger() : LLEventTimer(0.2f) {} // 0.2秒周期
-
-    // LLEventTimer::tick は BOOL 戻り値
-    // FALSE を返すと継続、TRUE でタイマー停止
+    LLCheckTextureNudger() : LLEventTimer(0.2f) {}
     BOOL tick() override
     {
         auto& pend = pending_ids();
-        if (pend.empty())
-        {
-            return TRUE; // 何もなければ停止
-        }
+        if (pend.empty()) return TRUE;
 
         for (const LLUUID& id : pend)
         {
@@ -10041,7 +10837,7 @@ public:
                 tex->addTextureStats(4096.f * 4096.f);
             }
         }
-        return FALSE; // 継続
+        return FALSE;
     }
 
     static std::set<LLUUID>& pending_ids()
@@ -10057,11 +10853,14 @@ public:
         return inst;
     }
 };
+
+// エクスポータ本体
 class LLCheckTextureExporter : public view_listener_t
 {
 public:
-    bool handleEvent(const LLSD& userdata) override
+    bool handleEvent(const LLSD&) override
     {
+        // 1) テクスチャ収集
         std::vector<FaceTex> items;
         gather_selection_textures(items);
         if (items.empty())
@@ -10070,41 +10869,107 @@ public:
             return true;
         }
 
+        // 2) 出力先
         std::string out_dir;
-        if (!pick_output_dir(out_dir))
+        if (!pick_output_dir(out_dir)) return true;
+
+        // 3) 一時的にLODを引き上げ（設定から）
         {
-            // キャンセル時は何もせず終了（通知も控えめにするなら下行を消す）
-            LL_INFOS("CheckTexture") << "Folder picker canceled or failed" << LL_ENDL;
-            return true;
+            F32 lod_factor = 16.0f;
+            if (LLControlVariable* c = gSavedSettings.getControl("ExportGLTF_LodFactor"))
+                lod_factor = llclamp(gSavedSettings.getF32("ExportGLTF_LodFactor"), 1.0f, 64.0f);
+
+            LLRenderVolumeLODGuard guard(lod_factor);
+            force_highest_lod_on_selection(2.0f, 100.0f); // 2秒/100ms（安定判定は関数側で強化）
         }
 
-        LL_INFOS("CheckTexture") << "Saving to: " << out_dir << LL_ENDL;
-        // 必要なら通知
-        // LLNotificationsUtil::add("GenericAlert", LLSD().with("MESSAGE", std::string("Saving to: ") + out_dir));
+        // 4) 画像フェッチ（UUIDごと1回）※非同期開始
+        std::set<LLUUID> queued_uuids = prepare_jobs_and_fetch(items, out_dir);
 
-        fetch_and_save_all(items, out_dir);
+        // 5) glTF 用の選択内容を構築
+        Selection sel = collect_selection_for_gltf();
+        sel.used_texture_ids.clear();
+        for (const auto& e : items) sel.used_texture_ids.insert(e.id);
 
-        // 必要なら通知
-        // LLNotificationsUtil::add("GenericAlert", LLSD().with("MESSAGE", "CheckTexture: export started."));
+        // 6) 監視セッション開始（タイムアウトは設定から）
+        F32 timeout_sec = 30.0f;
+        if (LLControlVariable* c = gSavedSettings.getControl("ExportGLTF_FullResTimeoutSec"))
+            timeout_sec = llclamp(gSavedSettings.getF32("ExportGLTF_FullResTimeoutSec"), 1.0f, 600.0f);
+
+        LLCheckTextureSession::start(out_dir, sel, queued_uuids, timeout_sec);
+
+        // 開始ダイアログは設定で抑制（デフォルト表示オフ）
+        if (gSavedSettings.getBOOL("ExportGLTF_ShowStartDialog"))
+        {
+            LLNotificationsUtil::add("GenericAlert",
+                LLSD().with("MESSAGE", "CheckTexture: started. Textures will save, glTF will be written automatically."));
+        }
         return true;
     }
-private:
-    struct FaceTex
-    {
-        LLUUID id;
-        std::string file_stub; // 例: ObjectName_L1_F3_BaseColor
-    };
 
+    static void on_texture_loaded(BOOL success,
+                                  LLViewerFetchedTexture* src,
+                                  LLImageRaw* raw,
+                                  LLImageRaw* aux,
+                                  S32 discard_level,
+                                  BOOL is_final,
+                                  void* userdata)
+    {
+        Job* job = static_cast<Job*>(userdata);
+
+        if (success && src && raw && job)
+        {
+            const S32 w = raw->getWidth();
+            const S32 h = raw->getHeight();
+
+            // より良い（discard が小さい）raw が来たら上書き保存
+            if (discard_level < job->best_discard)
+            {
+                LLPointer<LLImagePNG> png = new LLImagePNG;
+                if (png.notNull() && png->encode(raw, 0))
+                {
+                    for (const std::string& path : job->out_paths)
+                    {
+                        if (path.empty()) continue;
+                        if (LLFILE* fp = LLFile::fopen(path, "wb"))
+                        {
+                            fwrite(png->getData(), 1, png->getDataSize(), fp);
+                            fclose(fp);
+                        }
+                    }
+                    job->best_discard = discard_level;
+                    job->best_w = w;
+                    job->best_h = h;
+                }
+            }
+
+            // 完了判定：閾値に達したか、または最終コール
+            const S32 min_side = get_min_tex_side();
+            const bool enough_res = (job->best_w >= min_side || job->best_h >= min_side);
+            if (!job->saved && (enough_res || is_final))
+            {
+                job->saved = true;
+                LLCheckTextureSession::markSaved(job->id);
+            }
+        }
+
+        if (is_final)
+        {
+            auto& hold = hold_textures();
+            hold.erase(std::remove_if(hold.begin(), hold.end(),
+                [&](const LLPointer<LLViewerFetchedTexture>& t){ return job && t->getID() == job->id; }),
+                hold.end());
+            LLCheckTextureNudger::pending_ids().erase(job ? job->id : LLUUID::null);
+            delete job;
+        }
+    }
+
+private:
     static std::string sanitize_filename(std::string name)
     {
         if (name.empty()) name = "Object";
-        // NG 文字をアンダースコアに
         static const char* ng = "\\/:*?\"<>|\t\r\n";
-        for (const char* p = ng; *p; ++p)
-        {
-            std::replace(name.begin(), name.end(), *p, '_');
-        }
-        // 制御文字も除去
+        for (const char* p = ng; *p; ++p) std::replace(name.begin(), name.end(), *p, '_');
         for (char& c : name)
         {
             if (static_cast<unsigned char>(c) < 0x20) c = '_';
@@ -10112,6 +10977,7 @@ private:
         return name;
     }
 
+    // 選択リンクセットの全フェイスからテクスチャを収集（PBR・レガシー両対応）
     static void gather_selection_textures(std::vector<FaceTex>& out)
     {
         LLObjectSelectionHandle sel = LLSelectMgr::getInstance()->getSelection();
@@ -10132,16 +10998,12 @@ private:
             if (!root) root = any_obj;
 
             // 同じリンクセットを二重処理しない
-            if (!processed_roots.insert(root->getID()).second)
-            {
-                continue;
-            }
+            if (!processed_roots.insert(root->getID()).second) continue;
 
             auto process_object = [&](LLViewerObject* obj)
             {
                 if (!obj) return;
 
-                // オブジェクト名は UUID 先頭8桁で安定化
                 std::string obj_name = "obj_" + obj->getID().asString().substr(0, 8);
                 obj_name = sanitize_filename(obj_name);
 
@@ -10151,38 +11013,42 @@ private:
                     LLTextureEntry* te = obj->getTE(f);
                     if (!te) continue;
 
-                    // 例: obj_ab12cd34_F3_diffuse.png
                     const std::string base = llformat("%s_F%d_", obj_name.c_str(), f);
 
-                    // 旧（非PBR）
-                    const LLUUID diffuse = te->getID();
-                    if (diffuse.notNull())
+                    // レガシー
                     {
-                        out.push_back({ diffuse, base + "diffuse" });
-                    }
-
-                    LLMaterialPtr mparams = te->getMaterialParams();
-                    if (mparams.notNull())
-                    {
-                        const LLUUID normal   = mparams->getNormalID();
-                        const LLUUID specular = mparams->getSpecularID();
-                        if (normal.notNull())   out.push_back({ normal,   base + "normal" });
-                        if (specular.notNull()) out.push_back({ specular, base + "specular" });
-                    }
-
-                    // PBR（glTF）: mTextureId[] から直接取得
-                    LLPointer<LLGLTFMaterial> pbr = te->getGLTFMaterial();
-                    if (pbr.notNull())
-                    {
-                        auto add_if = [&](const LLUUID& id, const char* tag)
+                        const LLUUID diffuse = te->getID();
+                        if (diffuse.notNull())
                         {
-                            if (id.notNull()) out.push_back({ id, base + tag });
+                            out.push_back(FaceTex{ diffuse, base + "diffuse", obj->getID(), f, "Diffuse" });
+                        }
+
+                        LLMaterialPtr mparams = te->getMaterialParams();
+                        if (mparams.notNull())
+                        {
+                            const LLUUID normal   = mparams->getNormalID();
+                            const LLUUID specular = mparams->getSpecularID();
+                            if (normal.notNull())   out.push_back(FaceTex{ normal, base + "normal",   obj->getID(), f, "Normal"   });
+                            if (specular.notNull()) out.push_back(FaceTex{ specular, base + "specular", obj->getID(), f, "Specular" });
+                        }
+                    }
+
+                    // PBR
+                    if (LLPointer<LLGLTFMaterial> pbr = te->getGLTFMaterial(); pbr.notNull())
+                    {
+                        auto add_resolved = [&](const LLUUID& raw_id, const char* tag, const char* kind)
+                        {
+                            LLUUID id = resolve_pbr_texture_id(pbr, raw_id);
+                            if (id.notNull())
+                            {
+                                out.push_back(FaceTex{ id, base + tag, obj->getID(), f, kind });
+                            }
                         };
 
-                        add_if(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_BASE_COLOR],         "BaseColor");
-                        add_if(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_METALLIC_ROUGHNESS], "MetallicRoughness");
-                        add_if(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_EMISSIVE],           "Emissive");
-                        add_if(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_NORMAL],             "Normal");
+                        add_resolved(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_BASE_COLOR],         "BaseColor",         "BaseColor");
+                        add_resolved(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_METALLIC_ROUGHNESS], "MetallicRoughness", "MetallicRoughness");
+                        add_resolved(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_EMISSIVE],           "Emissive",          "Emissive");
+                        add_resolved(pbr->mTextureId[LLGLTFMaterial::GLTF_TEXTURE_INFO_NORMAL],             "Normal",            "Normal");
                     }
                 }
             };
@@ -10197,148 +11063,83 @@ private:
         }
     }
 
-    static bool ensure_dir_exists(const std::string& dir)
-    {
-        if (LLFile::isdir(dir)) return true;
-        S32 rc = LLFile::mkdir(dir);
-        return (rc == 0) || LLFile::isdir(dir);
-    }
-
+    // フォルダ選択（キャンセルなら false）
     static bool pick_output_dir(std::string& out_dir)
     {
         LLDirPicker& picker = LLDirPicker::instance();
-
         std::string chosen;
-        BOOL ok = picker.getDir(&chosen); // ブロッキングでフォルダ選択
-
-        // キャンセル/失敗は即中断（ここで getDirName は見ない）
-        if (!ok)
-        {
-            return false;
-        }
-
-        // 取得方法がプラットフォームで異なることがあるため補助的に getDirName も参照
-        std::string sel = chosen;
-        if (sel.empty())
-        {
-            sel = picker.getDirName();
-        }
-        if (sel.empty())
-        {
-            // まれに OK でも空文字が返る場合、中断
-            return false;
-        }
-
+        BOOL ok = picker.getDir(&chosen);
+        if (!ok) return false;
+        std::string sel = chosen.empty() ? picker.getDirName() : chosen;
+        if (sel.empty()) return false;
         out_dir = sel;
         return true;
     }
-
-    struct Job
-    {
-        std::string filepath;
-        LLUUID id;
-        bool saved = false;
-    };
-
-    static void fetch_and_save_all(const std::vector<FaceTex>& list, const std::string& dir)
-    {
-        for (const auto& e : list)
-        {
-            std::string path = gDirUtilp->add(dir, e.file_stub + ".png");
-
-            LLPointer<LLViewerFetchedTexture> tex =
-                LLViewerTextureManager::getFetchedTexture(e.id, FTT_DEFAULT, TRUE, LLGLTexture::BOOST_SELECTED);
-            if (!tex)
-            {
-                LL_WARNS("CheckTexture") << "getFetchedTexture failed: " << e.id << LL_ENDL;
-                continue;
-            }
-
-            // 高優先度・原寸要求・Raw保持
-            tex->setBoostLevel(LLGLTexture::BOOST_SELECTED);
-            tex->setMinDiscardLevel(0);
-            tex->forceToSaveRawImage(0);
-            tex->addTextureStats(4096.f * 4096.f);
-
-            // コールバック登録（原寸Rawが来るまで粘る）
-            Job* job = new Job{ path, e.id, false /*saved*/ };
-            tex->setLoadedCallback(
-                &LLCheckTextureExporter::on_texture_loaded,
-                0,      // 0=原寸が来たら呼ぶ
-                TRUE,   // keep_imageraw
-                FALSE,  // needs_aux は FALSE（TRUEだとAUX無しで止まることがある）
-                job,
-                NULL
-            );
-
-            // 保持＋ナッジ登録
-            hold_textures().push_back(tex);
-            LLCheckTextureNudger::pending_ids().insert(e.id);
-            LLCheckTextureNudger::instance(); // タイマー起動
-
-            LL_INFOS("CheckTexture") << "Requesting decode id=" << e.id << " -> " << path << LL_ENDL;
-        }
-    }
-
-    static void on_texture_loaded(BOOL success,
-                                LLViewerFetchedTexture* src,
-                                LLImageRaw* raw,
-                                LLImageRaw* aux,
-                                S32 discard_level,
-                                BOOL is_final,
-                                void* userdata)
-    {
-        Job* job = static_cast<Job*>(userdata);
-
-        const S32 rw = (raw ? raw->getWidth() : -1);
-        const S32 rh = (raw ? raw->getHeight() : -1);
-
-        LL_INFOS("CheckTexture") << "on_texture_loaded id=" << (job ? job->id.asString() : "null-job")
-                                << " success=" << success
-                                << " final=" << is_final
-                                << " discard=" << discard_level
-                                << " raw=" << (raw ? "yes" : "no")
-                                << " size=" << rw << "x" << rh
-                                << LL_ENDL;
-
-        // 原寸が来たときだけ保存（discard_level==0）
-        if (success && src && raw && job && !job->saved && discard_level == 0)
-        {
-            LLPointer<LLImagePNG> png = new LLImagePNG;
-            if (png.notNull() && png->encode(raw, 0))
-            {
-                if (!job->filepath.empty())
-                {
-                    if (LLFILE* fp = LLFile::fopen(job->filepath, "wb"))
-                    {
-                        fwrite(png->getData(), 1, png->getDataSize(), fp);
-                        fclose(fp);
-                        job->saved = true;
-                        LL_INFOS("CheckTexture") << "Saved: " << job->filepath << LL_ENDL;
-                    }
-                    else
-                    {
-                        LL_WARNS("CheckTexture") << "Cannot open: " << job->filepath << LL_ENDL;
-                    }
-                }
-            }
-        }
-
-        if (is_final)
-        {
-            // 保持解除
-            auto& hold = hold_textures();
-            hold.erase(std::remove_if(hold.begin(), hold.end(),
-                [&](const LLPointer<LLViewerFetchedTexture>& t){ return job && t->getID() == job->id; }),
-                hold.end());
-
-            // ペンディング解除
-            LLCheckTextureNudger::pending_ids().erase(job ? job->id : LLUUID::null);
-
-            delete job;
-        }
-    }
 };
+
+// UUIDごとに1回フェッチ登録（textures へ保存のみ）
+// 戻り値: キューした UUID の集合（セッション監視用）
+static std::set<LLUUID> prepare_jobs_and_fetch(const std::vector<FaceTex>& faces, const std::string& dir)
+{
+    std::set<LLUUID> queued;
+
+    std::string tex_dir = gDirUtilp->add(dir, "textures");
+    if (!LLFile::isdir(tex_dir)) LLFile::mkdir(tex_dir);
+
+    // UUID → Job 集約
+    std::map<LLUUID, std::unique_ptr<Job>> jobs;
+
+    for (const auto& e : faces)
+    {
+        if (e.id.isNull()) continue;
+
+        auto& job = jobs[e.id];
+        if (!job)
+        {
+            job = std::make_unique<Job>();
+            job->id = e.id;
+
+            const std::string tex_path = gDirUtilp->add(tex_dir, e.id.asString() + ".png");
+            job->out_paths.push_back(tex_path);
+        }
+    }
+
+    // 各UUIDで1回だけフェッチ
+    for (auto& kv : jobs)
+    {
+        std::unique_ptr<Job> job = std::move(kv.second);
+
+        LLPointer<LLViewerFetchedTexture> tex =
+            LLViewerTextureManager::getFetchedTexture(job->id, FTT_DEFAULT, TRUE, LLGLTexture::BOOST_SELECTED);
+        if (!tex) continue;
+
+        tex->setBoostLevel(LLGLTexture::BOOST_SELECTED);
+        tex->setMinDiscardLevel(0);
+        tex->forceToSaveRawImage(0);
+        tex->addTextureStats(4096.f * 4096.f);
+
+        // ナッジ登録
+        LLCheckTextureNudger::pending_ids().insert(job->id);
+        LLCheckTextureNudger::instance();
+
+        // コールバック登録（保存成功でセッションに報告）
+        Job* raw = job.release();
+        tex->setLoadedCallback(
+            &LLCheckTextureExporter::on_texture_loaded,
+            0,      // discard
+            TRUE,   // keep_imageraw
+            FALSE,  // needs_aux
+            raw,
+            NULL
+        );
+
+        hold_textures().push_back(tex);
+        queued.insert(raw->id);
+    }
+
+    return queued;
+}
+
 class LLCheckTextureEnable : public view_listener_t
 {
 public:
@@ -10348,10 +11149,10 @@ public:
         return sel && sel->getObjectCount() > 0;
     }
 };
+
 class LLCheckTextureMenuGate
 {
 public:
-    // 見つかって適用できたら true, 見つからなければ false
     static bool apply(bool visible)
     {
         if (!gViewerWindow) return false;
@@ -10369,32 +11170,29 @@ public:
         if (!item_view) return false;
 
         item_view->setVisible(visible);
-        develop->arrange(); // 再レイアウト
+        develop->arrange();
         return true;
     }
 
     static void onSettingChanged(const LLSD& new_value)
     {
-        // 設定変更時は即適用（メニューがまだなら後述のタイマーが拾う）
         apply(new_value.asBoolean());
     }
 };
+
 class LLCheckTextureMenuGateTimer : public LLEventTimer
 {
 public:
-    LLCheckTextureMenuGateTimer()
-    : LLEventTimer(0.5f) // 0.5秒毎に試行
-    {}
+    LLCheckTextureMenuGateTimer() : LLEventTimer(0.5f) {}
 
-    // TRUE を返すと停止、FALSE で継続
     BOOL tick() override
     {
         const bool want_visible = gSavedSettings.getBOOL("Mode_34");
         if (LLCheckTextureMenuGate::apply(want_visible))
         {
-            return TRUE; // 反映できたので停止
+            return TRUE;
         }
-        return FALSE; // まだ見つからない→次回
+        return FALSE;
     }
 };
 
