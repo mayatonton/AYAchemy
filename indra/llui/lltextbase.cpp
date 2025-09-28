@@ -2176,6 +2176,18 @@ LLTextSegmentPtr LLTextBase::getSegmentAtLocalPos( S32 x, S32 y, bool hit_past_e
     }
 }
 
+void LLTextBase::offerTeleport(std::string id)
+{
+    if (id.empty()) return;
+    const std::string url = "secondlife:///app/agent/" + id + "/offerteleport";
+    LLUrlAction::executeSLURL(url);
+}
+
+bool LLTextBase::canOfferTeleport(std::string id)
+{
+    return !id.empty();
+}
+
 void LLTextBase::createUrlContextMenu(S32 x, S32 y, const std::string &in_url)
 {
     // work out the XUI menu file to use for this url
@@ -2192,9 +2204,13 @@ void LLTextBase::createUrlContextMenu(S32 x, S32 y, const std::string &in_url)
         return;
     }
 
+    std::string id = match.getID().asString();
+    bool is_group = (false);
+
     // set up the callbacks for all of the potential menu items, N.B. we
     // don't use const ref strings in callbacks in case url goes out of scope
     LLUICtrl::CommitCallbackRegistry::ScopedRegistrar registrar;
+    LLUICtrl::EnableCallbackRegistry::ScopedRegistrar enable_registrar;
     registrar.add("Url.Open", boost::bind(&LLUrlAction::openURL, url));
     registrar.add("Url.OpenInternal", boost::bind(&LLUrlAction::openURLInternal, url));
     registrar.add("Url.OpenExternal", boost::bind(&LLUrlAction::openURLExternal, url));
@@ -2211,6 +2227,8 @@ void LLTextBase::createUrlContextMenu(S32 x, S32 y, const std::string &in_url)
     registrar.add("Url.CopyLabel", boost::bind(&LLUrlAction::copyLabelToClipboard, url));
     registrar.add("Url.CopyUrl", boost::bind(&LLUrlAction::copyURLToClipboard, url));
     registrar.add("Url.CopyUUID", boost::bind(&LLUrlAction::copyUUIDToClipboard, url));
+    registrar.add("Url.OfferTeleport", boost::bind(&LLTextBase::offerTeleport, id));
+    enable_registrar.add("Url.CanOfferTeleport", boost::bind(&LLTextBase::canOfferTeleport, id));
 
     // create and return the context menu from the XUI file
 

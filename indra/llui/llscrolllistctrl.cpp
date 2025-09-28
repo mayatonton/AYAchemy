@@ -2136,6 +2136,7 @@ BOOL LLScrollListCtrl::handleRightMouseDown(S32 x, S32 y, MASK mask)
             // (N.B. callbacks don't take const refs as id is local scope)
             bool is_group = (mContextMenuType == MENU_GROUP);
             LLUICtrl::CommitCallbackRegistry::ScopedRegistrar registrar;
+            LLUICtrl::EnableCallbackRegistry::ScopedRegistrar enable_registrar;
             registrar.add("Url.ShowProfile", boost::bind(&LLScrollListCtrl::showProfile, id, is_group));
             registrar.add("Url.SendIM", boost::bind(&LLScrollListCtrl::sendIM, id));
             registrar.add("Url.AddFriend", boost::bind(&LLScrollListCtrl::addFriend, id));
@@ -2145,6 +2146,8 @@ BOOL LLScrollListCtrl::handleRightMouseDown(S32 x, S32 y, MASK mask)
             registrar.add("Url.CopyLabel", boost::bind(&LLScrollListCtrl::copyNameToClipboard, id, is_group));
             registrar.add("Url.CopyUrl", boost::bind(&LLScrollListCtrl::copySLURLToClipboard, id, is_group));
             registrar.add("Url.CopyUUID", boost::bind(&LLScrollListCtrl::copyUUIDToClipboard, id));
+            registrar.add("Url.OfferTeleport", boost::bind(&LLScrollListCtrl::offerTeleport, id));
+            enable_registrar.add("Url.CanOfferTeleport", boost::bind(&LLScrollListCtrl::canOfferTeleport, id));
 
             // create the context menu from the XUI file and display it
             std::string menu_name = is_group ? "menu_url_group.xml" : "menu_url_agent.xml";
@@ -2227,6 +2230,18 @@ void LLScrollListCtrl::removeFriend(std::string id)
 {
     std::string slurl = "secondlife:///app/agent/" + id + "/about";
     LLUrlAction::removeFriend(slurl);
+}
+
+void LLScrollListCtrl::offerTeleport(std::string id)
+{
+    if (id.empty())
+        return;
+    LLUrlAction::executeSLURL("secondlife:///app/agent/" + id + "/offerteleport");
+}
+
+bool LLScrollListCtrl::canOfferTeleport(std::string id)
+{
+    return !id.empty();
 }
 
 void LLScrollListCtrl::reportAbuse(std::string id, bool is_group)
