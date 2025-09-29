@@ -389,6 +389,7 @@ BOOL enable_detach(const LLSD& = LLSD());
 void menu_toggle_attached_lights(void* user_data);
 void menu_toggle_attached_particles(void* user_data);
 
+
 class LLMenuParcelObserver : public LLParcelObserver
 {
 public:
@@ -11180,6 +11181,16 @@ public:
     }
 };
 
+// Pose Stand を開くメニューハンドラ
+class LLPoseStandShow : public view_listener_t
+{
+    bool handleEvent(const LLSD& userdata) override
+    {
+        LLFloater* f = LLFloaterReg::showInstance("pose_stand");
+        return true;
+    }
+};
+
 class LLCheckTextureMenuGateTimer : public LLEventTimer
 {
 public:
@@ -11286,6 +11297,9 @@ void initialize_menus()
     commit.add("Agent.ToggleMicrophone", boost::bind(&LLAgent::toggleMicrophone, _2));
     enable.add("Agent.IsMicrophoneOn", boost::bind(&LLAgent::isMicrophoneOn, _2));
     enable.add("Agent.IsActionAllowed", boost::bind(&LLAgent::isActionAllowed, _2));
+
+    // Pose Stand
+    view_listener_t::addMenu(new LLPoseStandShow(), "PoseStand.Show");
 
     // File menu
     init_menu_file();

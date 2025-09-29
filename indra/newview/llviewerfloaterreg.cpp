@@ -206,6 +206,7 @@
 #include "llsyswellwindow.h"
 #include "bdfloaterposer.h"
 #include "bdfloaterposecreator.h"
+#include "llfloaterposestand.h"
 
 // *NOTE: Please add files in alphabetical order to keep merges easy.
 // [RLVa:KB] - Checked: 2010-03-11
@@ -594,7 +595,7 @@ void LLViewerFloaterReg::registerFloaters()
     LLFloaterReg::add("settings_color", "floater_settings_color.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<ALFloaterSettingsColor>);
     LLFloaterReg::add("sound_explorer", "floater_explore_sounds.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<ALFloaterExploreSounds>);
     LLFloaterReg::add("webprofile", "floater_web_profile.xml", (LLFloaterBuildFunc)&LLFloaterWebProfile::create);
-
+    LLFloaterReg::add("pose_stand", "floater_pose_stand.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterPoseStand>);
 
     LLFloaterReg::registerControlVariables(); // Make sure visibility and rect controls get preserved when saving
 }

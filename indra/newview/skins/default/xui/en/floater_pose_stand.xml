@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<floater
+    name="pose_stand"
+    title="Pose Stand"
+    width="224"
+    height="50"
+    can_resize="false">
+  <combo_box
+      name="pose_combo"
+      left="12" top_pad="16" width="200" height="22">
+    <item label="T-Pose" value="0"/>
+    <item label="Arms down, Legs together" value="1"/>
+    <item label="Arms downward, Legs apart" value="2"/>
+    <item label="Arms downward, Legs together" value="3"/>
+    <item label="Arms forward, Legs apart" value="4"/>
+    <item label="Arms forward, Legs together" value="5"/>
+    <item label="Arms straight, Legs apart" value="6"/>
+    <item label="Arms upward, Legs apart" value="7"/>
+    <item label="Arms upward, Legs together" value="8"/>
+  </combo_box>
+</floater>

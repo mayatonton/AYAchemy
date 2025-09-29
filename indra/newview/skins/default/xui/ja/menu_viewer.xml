@@ -54,6 +54,7 @@
 		</menu>
 		<menu_item_call label="選択された装着物を取り外す" name="Remove Selected Attachments"/>
 		<menu_item_call label="アバターを選択…" name="Avatar Picker"/>
+	    <menu_item_call label="ポーズスタンド" name="Pose Stand" />
 		<menu_item_call label="座る／立つ" name="Sit stand"/>
 		<menu_item_call label="飛行／歩行" name="Fly land" shortcut="HOME"/>
 		<menu_item_call label="アニメーション停止" name="Stop Animating My Avatar"/>
