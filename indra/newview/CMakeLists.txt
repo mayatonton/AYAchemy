@@ -330,6 +330,7 @@ set(viewer_SOURCE_FILES
     llfloaterpay.cpp
     llfloaterperformance.cpp
     llfloaterperms.cpp
+    llfloaterposestand.cpp
     llfloaterprofile.cpp
     llfloaterprofilelegacy.cpp
     llfloaterpreference.cpp
@@ -1084,6 +1085,7 @@ set(viewer_HEADER_FILES
     llfloaterpay.h
     llfloaterperformance.h
     llfloaterperms.h
+    llfloaterposestand.h
     llfloaterprofile.h
     llfloaterprofilelegacy.h
     llfloaterpreference.h
