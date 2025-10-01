@@ -59,7 +59,8 @@ Name=Associate SLURLs"
 
     printf "Installing menu entries via XDG..."
     printf "%b" "${desktop_entry}" > "${installation_prefix}/${desktopfilename}".desktop || echo "Failed to install application menu!"
-	xdg-icon-resource install --novendor --size 256 "${installation_prefix}/alchemy_icon.png" "${desktopfilename}"
+	# xdg-icon-resource install --novendor --size 256 "${installation_prefix}/alchemy_icon.png" "${desktopfilename}"
+    xdg-icon-resource install --novendor --size 256 "${installation_prefix}/ayachemy_icon_256.png" "${desktopfilename}"
 	#NOTE: Above command takes the path to the icon to install && The name of the icon to be used by XDG. This should always be in the format of "x-Viewer" to avoid potential naming conflicts, as per XDG spec.
 	xdg-desktop-menu install --novendor "${installation_prefix}"/"${desktopfilename}".desktop
 
