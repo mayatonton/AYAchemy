@@ -912,10 +912,14 @@ with the same filename but different name
   <texture name="Single_Folder_Forward" file_name="icons/single_folder_forward.png" preload="true"/>
   <texture name="Single_Folder_Up" file_name="icons/single_folder_up.png" preload="true"/>
  
-  <texture name="AlchemyRelease128" file_name="alchemy/alchemy_128.png" preload="false" />
-  <texture name="AlchemyBeta128" file_name="alchemy/alchemybeta_128.png" preload="false" />
-  <texture name="AlchemyProject128" file_name="alchemy/alchemyproject_128.png" preload="false" />
-  <texture name="AlchemyTest128" file_name="alchemy/alchemytest_128.png" preload="false" />
+  <!-- <texture name="AlchemyRelease128" file_name="alchemy/alchemy_128.png" preload="false" /> -->
+  <!-- <texture name="AlchemyBeta128" file_name="alchemy/alchemybeta_128.png" preload="false" /> -->
+  <!-- <texture name="AlchemyProject128" file_name="alchemy/alchemyproject_128.png" preload="false" /> -->
+  <!-- <texture name="AlchemyTest128" file_name="alchemy/alchemytest_128.png" preload="false" /> -->
+  <texture name="AlchemyRelease128" file_name="alchemy/ayachemy_icon_128.png" preload="false" />
+  <texture name="AlchemyBeta128" file_name="alchemy/ayachemy_icon_128.png" preload="false" />
+  <texture name="AlchemyProject128" file_name="alchemy/ayachemy_icon_128.png" preload="false" />
+  <texture name="AlchemyTest128" file_name="alchemy/ayachemy_icon_128.png" preload="false" />
 
   <texture name="social_discord" file_name="alchemy/discord_32.png" preload="false" />
   <texture name="social_mastodon" file_name="alchemy/mastodon_32.png" preload="false" />

@@ -1211,9 +1211,11 @@ class LinuxManifest(ViewerManifest):
         icon_path = self.icon_path()
         print("DEBUG: icon_path '%s'" % icon_path)
         with self.prefix(src=icon_path) :
-            self.path("alchemy_256.png","alchemy_icon.png")
+            # self.path("alchemy_256.png","alchemy_icon.png")
+            self.path("ayachemy_icon_256.png","ayachemy_icon_256.png")
             with self.prefix(dst="res-sdl") :
-                self.path("alchemy_256.BMP","ll_icon.BMP")
+                # self.path("alchemy_256.BMP","ll_icon.BMP")
+                self.path("ayachemy_256.BMP","ayachemy_256.BMP")
 
         # plugins
         with self.prefix(src=os.path.join(self.args['build'], os.pardir, "media_plugins"), dst="bin/llplugin"):
