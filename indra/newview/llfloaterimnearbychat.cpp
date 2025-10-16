@@ -74,6 +74,7 @@
 #include "rlvcommon.h"
 #include "rlvhandler.h"
 // [/RLVa:KB]
+#include "llchatlog_async.h"
 
 S32 LLFloaterIMNearbyChat::sLastSpecialChatChannel = 0;
 
@@ -690,39 +691,48 @@ void LLFloaterIMNearbyChat::sendChat( EChatType type )
     }
 }
 
-void LLFloaterIMNearbyChat::addMessage(const LLChat& chat,bool archive,const LLSD &args)
+void LLFloaterIMNearbyChat::addMessage(const LLChat& chat, bool archive, const LLSD &args)
 {
     appendMessage(chat, args);
 
-    if(archive)
+    if (archive)
     {
         mMessageArchive.push_back(chat);
-        if(mMessageArchive.size() > 200)
+        if (mMessageArchive.size() > 200)
         {
             mMessageArchive.erase(mMessageArchive.begin());
         }
     }
 
-    // logging
-    if (!args["do_not_log"].asBoolean() && gSavedPerAccountSettings.getS32("KeepConversationLogTranscripts") > 1)
+    // 非同期ログ（do_not_log / 設定Respect）
+    if (!args["do_not_log"].asBoolean() &&
+        gSavedPerAccountSettings.getS32("KeepConversationLogTranscripts") > 1)
     {
         std::string from_name = chat.mFromName;
 
         if (chat.mSourceType == CHAT_SOURCE_AGENT)
         {
-            // if the chat is coming from an agent, log the complete name
+            // エージェントなら表示名ではなくフル名で記録
             LLAvatarName av_name;
-            LLAvatarNameCache::get(chat.mFromID, &av_name);
-
-            if (!av_name.isDisplayNameDefault())
+            if (LLAvatarNameCache::get(chat.mFromID, &av_name) &&
+                !av_name.isDisplayNameDefault())
             {
                 from_name = av_name.getCompleteName();
             }
         }
 
-        LLLogChat::saveHistory("chat", from_name, chat.mFromID, chat.mText);
+        // 既存の同期I/Oをやめ、非同期へ
+        LLChat to_log = chat;
+        to_log.mFromName = from_name;
+        if (to_log.mTime <= 0.f)
+        {
+            to_log.mTime = (F32)LLFrameTimer::getElapsedSeconds();
+        }
+
+        ChatLogAsync::instance().enqueue(to_log); // Nearby は log_name 指定なし（= "chat"）
     }
 }
+
 
 
 void LLFloaterIMNearbyChat::onChatBoxCommit()

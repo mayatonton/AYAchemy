@@ -284,6 +284,8 @@ using namespace LL;
 // define a self-registering event API object
 #include "llappviewerlistener.h"
 
+#include "llchat_async.h"
+
 static LLAppViewerListener sAppViewerListener(LLAppViewer::instance);
 
 ////// Windows-specific includes to the bottom - nasty defines in these pollute the preprocessor
@@ -1241,6 +1243,7 @@ bool LLAppViewer::init()
     return true;
 }
 
+
 void LLAppViewer::initMaxHeapSize()
 {
     //set the max heap size.
@@ -1435,6 +1438,12 @@ bool LLAppViewer::doFrame()
                     idle();
                 }
 
+                // ★ ChatAsync: ネットワーク/各種処理（idle）直後に、ジッタ満了分だけUIへ排出
+                {
+                    LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df chat-async-drain");
+                    ChatAsync::instance().drainReady();
+                }
+
                 {
                     LL_PROFILE_ZONE_NAMED_CATEGORY_APP( "df resumeMainloopTimeout" )
                     resumeMainloopTimeout();
@@ -1460,6 +1469,12 @@ bool LLAppViewer::doFrame()
             // *TODO: Should we run display() even during gHeadlessClient?  DK 2011-02-18
             if (!LLApp::isExiting() && !gHeadlessClient && gViewerWindow)
             {
+                // ★ ChatAsync: 描画直前にも排出（UIの即時性確保・軽量）
+                {
+                    LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df chat-async-drain2");
+                    ChatAsync::instance().drainReady();
+                }
+
                 LL_PROFILE_ZONE_NAMED_CATEGORY_APP("df Display");
                 pingMainloopTimeout("Main:Display");
                 gGLActive = TRUE;

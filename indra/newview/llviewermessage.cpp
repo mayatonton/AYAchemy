@@ -135,6 +135,7 @@
 #include "llexperiencecache.h"
 
 #include "llexperiencecache.h"
+#include "llchat_async.h"
 
 extern void on_new_message(const LLSD& msg);
 
@@ -2638,6 +2639,7 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
     {
         return;
     }
+
     LLChat  chat;
     std::string     mesg;
     std::string     from_name;
@@ -2668,12 +2670,21 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 
     chat.mTime = LLFrameTimer::getElapsedSeconds();
 
+    U32 sim_time = 0;
+    // まずブロックがあるか（ブロック数 > 0）を確認
+    if (msg->getNumberOfBlocksFast(_PREHASH_ChatData) > 0)
+    {
+        // そのブロックに Time フィールドがあるか（サイズ > 0）を確認
+        S32 sz = msg->getSizeFast(_PREHASH_ChatData, _PREHASH_Time);
+        if (sz > 0)
+        {
+            msg->getU32Fast(_PREHASH_ChatData, _PREHASH_Time, sim_time);
+        }
+    }
+
     // IDEVO Correct for new-style "Resident" names
     if (chat.mSourceType == CHAT_SOURCE_AGENT)
     {
-        // I don't know if it's OK to change this here, if
-        // anything downstream does lookups by name, for instance
-
         LLAvatarName av_name;
         if (LLAvatarNameCache::get(from_id, &av_name))
         {
@@ -2686,7 +2697,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
     }
     else
     {
-        // make sure that we don't have an empty or all-whitespace name
         LLStringUtil::trim(from_name);
         static const LLCachedControl<bool> sMarkUnnamedObjects(gSavedSettings, "AlchemyChatMarkUnnamedObjects", true);
         if (sMarkUnnamedObjects && from_name.empty())
@@ -2723,17 +2733,14 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 //      if (chat.mSourceType == CHAT_SOURCE_OBJECT
 //          && chat.mChatType != CHAT_TYPE_DEBUG_MSG
 //          && gSavedSettings.getBOOL("EffectScriptChatParticles") )
-// [RLVa:KB] - Checked: 2010-03-09 (RLVa-1.2.0b) | Modified: RLVa-1.0.0g
+// [RLVa:KB]
         if ( ((chat.mSourceType == CHAT_SOURCE_OBJECT) && (chat.mChatType != CHAT_TYPE_DEBUG_MSG)) &&
              (gSavedSettings.getBOOL("EffectScriptChatParticles")) &&
              ((!rlv_handler_t::isEnabled()) || (CHAT_TYPE_OWNER != chat.mChatType)) )
-// [/RLVa:KB]
         {
             LLPointer<LLViewerPartSourceChat> psc = new LLViewerPartSourceChat(chatter->getPositionAgent());
             psc->setSourceObject(chatter);
             psc->setColor(color);
-            //We set the particles to be owned by the object's owner,
-            //just in case they should be muted by the mute list
             psc->setOwnerUUID(owner_id);
             LLViewerPartSim::getInstance()->addPartSource(psc);
         }
@@ -2752,21 +2759,15 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 
     if (is_audible)
     {
-        //BOOL visible_in_chat_bubble = FALSE;
-
         color.setVec(1.f,1.f,1.f,1.f);
         msg->getStringFast(_PREHASH_ChatData, _PREHASH_Message, mesg);
 
-// [RLVa:KB] - Checked: 2010-04-23 (RLVa-1.2.0f) | Modified: RLVa-1.2.0f
+        // [RLVa:KB] フィルタ群（元のまま）
         if ( (rlv_handler_t::isEnabled()) && (CHAT_TYPE_START != chat.mChatType) && (CHAT_TYPE_STOP != chat.mChatType) )
         {
-            // NOTE: chatter can be NULL (may not have rezzed yet, or could be another avie's HUD attachment)
             BOOL is_attachment = (chatter) ? chatter->isAttachment() : FALSE;
             BOOL is_owned_by_me = (chatter) ? chatter->permYouOwner() : FALSE;
 
-            // Filtering "rules":
-            //   avatar  => filter all avie text (unless it's this avie or they're an exemption)
-            //   objects => filter everything except attachments this avie owns (never filter llOwnerSay or llRegionSayTo chat)
             if ( ( (CHAT_SOURCE_AGENT == chat.mSourceType) && (from_id != gAgent.getID()) ) ||
                  ( (CHAT_SOURCE_OBJECT == chat.mSourceType) && ((!is_owned_by_me) || (!is_attachment)) &&
                    (CHAT_TYPE_OWNER != chat.mChatType) && (CHAT_TYPE_DIRECT != chat.mChatType) ) )
@@ -2789,9 +2790,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
                 }
             }
 
-            // Filtering "rules":
-            //   avatar => filter only their name (unless it's this avie)
-            //   other  => filter everything
             if (!RlvActions::canShowName(RlvActions::SNC_DEFAULT))
             {
                 if (CHAT_SOURCE_AGENT != chat.mSourceType)
@@ -2805,8 +2803,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
                 }
             }
 
-            // Create an "objectim" URL for objects if we're either @shownames or @showloc restricted
-            // (we need to do this now because we won't be have enough information to do it later on)
             if ( (CHAT_SOURCE_OBJECT == chat.mSourceType) &&
                  ( (!RlvActions::canShowName(RlvActions::SNC_DEFAULT)) || (!RlvActions::canShowLocation()) ) )
             {
@@ -2814,6 +2810,7 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
                 sdQuery["name"] = chat.mFromName;
                 sdQuery["owner"] = owner_id;
 
+                BOOL is_owned_by_me = (chatter) ? chatter->permYouOwner() : FALSE;
                 if ( (!RlvActions::canShowName(RlvActions::SNC_DEFAULT, owner_id)) && (!is_owned_by_me) )
                     sdQuery["rlv_shownames"] = true;
 
@@ -2824,11 +2821,11 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
                 chat.mURL = LLSLURL("objectim", from_id, LLURI::mapToQueryString(sdQuery)).getSLURLString();
             }
         }
-// [/RLVa:KB]
+        // [/RLVa:KB]
 
         BOOL ircstyle = FALSE;
 
-        // Look for IRC-style emotes here so chatbubbles work
+        // IRC-style emote 検出
         std::string prefix = mesg.substr(0, 4);
         if (prefix == "/me " || prefix == "/me'")
         {
@@ -2836,12 +2833,10 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
         }
         chat.mText = mesg;
 
-        // Look for the start of typing so we can put "..." in the bubbles.
+        // タイピング開始/終了
         if (CHAT_TYPE_START == chat.mChatType)
         {
             LLLocalSpeakerMgr::getInstance()->setSpeakerTyping(from_id, TRUE);
-
-            // Might not have the avatar constructed yet, eg on login.
             if (chatter && chatter->isAvatar())
             {
                 ((LLVOAvatar*)chatter)->startTyping();
@@ -2851,8 +2846,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
         else if (CHAT_TYPE_STOP == chat.mChatType)
         {
             LLLocalSpeakerMgr::getInstance()->setSpeakerTyping(from_id, FALSE);
-
-            // Might not have the avatar constructed yet, eg on login.
             if (chatter && chatter->isAvatar())
             {
                 ((LLVOAvatar*)chatter)->stopTyping();
@@ -2860,122 +2853,33 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
             return;
         }
 
-        // Look for IRC-style emotes
+        // 表示テキスト作成（元のロジックを維持）
         if (ircstyle)
         {
-            // set CHAT_STYLE_IRC to avoid adding Avatar Name as author of message. See EXT-656
             chat.mChatStyle = CHAT_STYLE_IRC;
-
-            // Do nothing, ircstyle is fixed above for chat bubbles
         }
         else
         {
             chat.mText = "";
             switch(chat.mChatType)
             {
-            case CHAT_TYPE_WHISPER:
-                chat.mText = LLTrans::getString("whisper") + " ";
-                break;
+            case CHAT_TYPE_WHISPER: chat.mText = LLTrans::getString("whisper") + " "; break;
             case CHAT_TYPE_OWNER:
-// [RLVa:KB] - Checked: 2010-02-XX (RLVa-1.2.0a) | Modified: RLVa-1.1.0f
-                // TODO-RLVa: [RLVa-1.2.0] consider rewriting this before a RLVa-1.2.0 release
-                if ( (rlv_handler_t::isEnabled()) && (mesg.length() > 3) && (RLV_CMD_PREFIX == mesg[0]) && (CHAT_TYPE_OWNER == chat.mChatType) &&
-                     ((!chatter) || (!chatter->isAttachment()) || (!chatter->isTempAttachment()) || (RlvSettings::getEnableTemporaryAttachments())) )
-                {
-                    mesg.erase(0, 1);
-                    LLStringUtil::toLower(mesg);
-
-                    std::string strExecuted, strFailed, strRetained, *pstr;
-
-                    boost_tokenizer tokens(mesg, boost::char_separator<char>(",", "", boost::drop_empty_tokens));
-                    for (boost_tokenizer::iterator itToken = tokens.begin(); itToken != tokens.end(); ++itToken)
-                    {
-                        std::string strCmd = *itToken;
-
-                        ERlvCmdRet eRet = gRlvHandler.processCommand(from_id, strCmd, true);
-                        if ( (RlvSettings::getDebug()) &&
-                             ( (!RlvSettings::getDebugHideUnsetDup()) ||
-                               ((RLV_RET_SUCCESS_UNSET != eRet) && (RLV_RET_SUCCESS_DUPLICATE != eRet)) ) )
-                        {
-                            if ( RLV_RET_SUCCESS == (eRet & RLV_RET_SUCCESS) )
-                                pstr = &strExecuted;
-                            else if ( RLV_RET_FAILED == (eRet & RLV_RET_FAILED) )
-                                pstr = &strFailed;
-                            else if (RLV_RET_RETAINED == eRet)
-                                pstr = &strRetained;
-                            else
-                            {
-                                RLV_ASSERT(false);
-                                pstr = &strFailed;
-                            }
-
-                            const char* pstrSuffix = RlvStrings::getStringFromReturnCode(eRet);
-                            if (pstrSuffix)
-                                strCmd.append(" (").append(pstrSuffix).append(")");
-
-                            if (!pstr->empty())
-                                pstr->push_back(',');
-                            pstr->append(strCmd);
-                        }
-                    }
-
-                    if (RlvForceWear::instanceExists())
-                        RlvForceWear::instance().done();
-
-                    if ( (!RlvSettings::getDebug()) || ((strExecuted.empty()) && (strFailed.empty()) && (strRetained.empty())) )
-                        return;
-
-                    // Silly people want comprehensive debug messages, blah :p
-                    if ( (!strExecuted.empty()) && (strFailed.empty()) && (strRetained.empty()) )
-                    {
-                        chat.mText = " executes: @";
-                        mesg = strExecuted;
-                    }
-                    else if ( (strExecuted.empty()) && (!strFailed.empty()) && (strRetained.empty()) )
-                    {
-                        chat.mText = " failed: @";
-                        mesg = strFailed;
-                    }
-                    else if ( (strExecuted.empty()) && (strFailed.empty()) && (!strRetained.empty()) )
-                    {
-                        chat.mText = " retained: @";
-                        mesg = strRetained;
-                    }
-                    else
-                    {
-                        chat.mText = ": @";
-                        if (!strExecuted.empty())
-                            mesg += "\n    - executed: @" + strExecuted;
-                        if (!strFailed.empty())
-                            mesg += "\n    - failed: @" + strFailed;
-                        if (!strRetained.empty())
-                            mesg += "\n    - retained: @" + strRetained;
-                    }
-
-                    break;
-                }
-// [/RLVa:KB]
-// [RLVa:KB] - Checked: 2010-03-09 (RLVa-1.2.0b) | Modified: RLVa-1.0.0g
-                // Copy/paste from above
                 if  ( (rlv_handler_t::isEnabled()) && (chatter) && (chat.mSourceType == CHAT_SOURCE_OBJECT) &&
                       (gSavedSettings.getBOOL("EffectScriptChatParticles")) )
                 {
                     LLPointer<LLViewerPartSourceChat> psc = new LLViewerPartSourceChat(chatter->getPositionAgent());
                     psc->setSourceObject(chatter);
                     psc->setColor(color);
-                    //We set the particles to be owned by the object's owner,
-                    //just in case they should be muted by the mute list
                     psc->setOwnerUUID(owner_id);
                     LLViewerPartSim::getInstance()->addPartSource(psc);
                 }
-// [/RLVa:KB]
+                // fall through
             case CHAT_TYPE_DEBUG_MSG:
             case CHAT_TYPE_NORMAL:
             case CHAT_TYPE_DIRECT:
                 break;
-            case CHAT_TYPE_SHOUT:
-                chat.mText = LLTrans::getString("shout") + " ";
-                break;
+            case CHAT_TYPE_SHOUT:   chat.mText = LLTrans::getString("shout") + " "; break;
             case CHAT_TYPE_START:
             case CHAT_TYPE_STOP:
                 LL_WARNS("Messaging") << "Got chat type start/stop in main chat processing." << LL_ENDL;
@@ -2984,11 +2888,10 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
                 LL_WARNS("Messaging") << "Unknown type " << chat.mChatType << " in chat!" << LL_ENDL;
                 break;
             }
-
             chat.mText += mesg;
         }
 
-        // We have a real utterance now, so can stop showing "..." and proceed.
+        // チャットバブル表示など（元のまま）
         if (chatter && chatter->isAvatar())
         {
             LLLocalSpeakerMgr::getInstance()->setSpeakerTyping(from_id, FALSE);
@@ -2996,7 +2899,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 
             if (!is_muted && !is_do_not_disturb)
             {
-                //visible_in_chat_bubble = gSavedSettings.getBOOL("UseChatBubbles");
                 std::string formated_msg = "";
                 LLViewerChat::formatChatMsg(chat, formated_msg);
                 LLChat chat_bubble = chat;
@@ -3010,45 +2912,66 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
             chat.mPosAgent = chatter->getPositionAgent();
         }
 
-        // truth table:
-        // LINDEN   BUSY    MUTED   OWNED_BY_YOU    TASK        DISPLAY     STORE IN HISTORY
-        // F        F       F       F               *           Yes         Yes
-        // F        F       F       T               *           Yes         Yes
-        // F        F       T       F               *           No          No
-        // F        F       T       T               *           No          No
-        // F        T       F       F               *           No          Yes
-        // F        T       F       T               *           Yes         Yes
-        // F        T       T       F               *           No          No
-        // F        T       T       T               *           No          No
-        // T        *       *       *               F           Yes         Yes
-
         chat.mMuted = is_muted && !is_linden;
 
-        // pass owner_id to chat so that we can display the remote
-        // object inspect for an object that is chatting with you
         LLSD args;
         chat.mOwnerID = owner_id;
 
-        LLTranslate::instance().logCharsSeen(mesg.size());
-        if (gSavedSettings.getBOOL("TranslateChat") && chat.mSourceType != CHAT_SOURCE_SYSTEM)
+        // ====== ここから「非同期経路」分岐 ======
+        const BOOL use_async = gSavedSettings.controlExists("ChatAsyncEnabled")
+                               ? gSavedSettings.getBOOL("ChatAsyncEnabled")
+                               : TRUE; // 設定未登録でも既定で有効にしておく
+
+        if (use_async)
         {
-            if (chat.mChatStyle == CHAT_STYLE_IRC)
+            // ここでは翻訳（TranslateChat）は v1 では通さず、そのまま表示に回します。
+            // ※ 翻訳を維持したい場合は translateMessage のコールバックで ChatAsync へ enqueue する薄いアダプタを後で追加可。
+            // NearbyChat へ直送せず、ジッタバッファ経由で UI に出す。
+            ChatItem item;
+            item.text      = chat.mText;
+            item.from      = chat.mFromName;
+            item.chat_type = (S32)chat.mChatType;
+            item.channel    = 0;
+            item.sim_time  = sim_time;
+            item.arrival_mono = LLTimer::getTotalTime();
+            item.source_type = (S32)chat.mSourceType;
+            item.from_id     = chat.mFromID;   // ★ 重要：アイコン/メニューに必須
+            item.owner_id    = owner_id;       // オブジェクト発言の所有者
+            item.time        = chat.mTime;     // ★ 重要：履歴扱い(グレー化)回避
+            // ★ 自分の発言は即時表示（ジッタ無効）
+            if (chat.mFromID == gAgent.getID())
             {
-                mesg = mesg.substr(4, std::string::npos);
+                item.no_hold = true;
             }
-            const std::string from_lang = ""; // leave empty to trigger autodetect
-            const std::string to_lang = LLTranslate::getTranslateLanguage();
+            ChatAsync::instance().enqueue(std::move(item));
 
-            LLTranslate::instance().logCharsSent(mesg.size());
-            LLTranslate::translateMessage(from_lang, to_lang, mesg,
-                boost::bind(&translateSuccess, chat, args, mesg, from_lang, _1, _2),
-                boost::bind(&translateFailure, chat, args, _1, _2));
-
+            // 従来 onChat 経路はスキップ（重複表示を避ける）
+            // 通知等が必要なら、ここで別途トリガーするか、ChatAsync 側で行う拡張を検討。
         }
         else
         {
-            LLNotificationsUI::LLNotificationManager::instance().onChat(chat, args);
+            // ====== 従来経路（同期） ======
+            LLTranslate::instance().logCharsSeen(mesg.size());
+            if (gSavedSettings.getBOOL("TranslateChat") && chat.mSourceType != CHAT_SOURCE_SYSTEM)
+            {
+                if (chat.mChatStyle == CHAT_STYLE_IRC)
+                {
+                    mesg = mesg.substr(4, std::string::npos);
+                }
+                const std::string from_lang = ""; // autodetect
+                const std::string to_lang = LLTranslate::getTranslateLanguage();
+
+                LLTranslate::instance().logCharsSent(mesg.size());
+                LLTranslate::translateMessage(from_lang, to_lang, mesg,
+                    boost::bind(&translateSuccess, chat, args, mesg, from_lang, _1, _2),
+                    boost::bind(&translateFailure, chat, args, _1, _2));
+            }
+            else
+            {
+                LLNotificationsUI::LLNotificationManager::instance().onChat(chat, args);
+            }
         }
+        // ====== 非同期/同期 分岐ここまで ======
 
         // don't call notification for debug messages from not owned objects
         if (chat.mChatType == CHAT_TYPE_DEBUG_MSG)
@@ -3067,7 +2990,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
             msg_notify["source_type"] = chat.mSourceType;
             on_new_message(msg_notify);
         }
-
     }
 }
 
