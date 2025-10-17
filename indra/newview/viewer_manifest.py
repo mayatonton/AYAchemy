@@ -157,7 +157,9 @@ class ViewerManifest(LLManifest):
                 self.path("*.tga")
 
             # Include our fonts
-            with self.prefix(src=os.path.join(pkgdir, 'fonts'), dst="fonts"):
+            # with self.prefix(src=os.path.join(pkgdir, 'fonts'), dst="fonts"):
+            # Include our fonts (ソース相対: <repo>/packages/fonts/* を同梱)
+            with self.prefix(src=os.path.join(self.args['source'], os.pardir, os.pardir, 'packages', 'fonts'), dst="fonts"):
                 self.path("*.otf")
                 self.path("*.ttf")
                 self.path("*.ttc")
@@ -275,8 +277,8 @@ class ViewerManifest(LLManifest):
         return ''.join(self.app_name().split())
     
     def icon_path(self):
-        return os.path.join(self.args['build'], os.pardir, 'packages', 'branding', 'viewer', 'icons', self.channel_type())
-
+        # return os.path.join(self.args['build'], os.pardir, 'packages', 'branding', 'viewer', 'icons', self.channel_type())
+        return os.path.join(self.args['source'], os.pardir, os.pardir, 'packages', 'branding', 'viewer', 'icons', self.channel_type())
     def extract_names(self,src):
         """Extract contributor names from source file, returns string"""
         try:
@@ -815,7 +817,7 @@ class DarwinManifest(ViewerManifest):
 
                 # need .icns file referenced by Info.plist
                 with self.prefix(src=self.icon_path(), dst="") :
-                    self.path("alchemy.icns")
+                    self.path("ayachemy.icns")
 
                 with self.prefix(src_dst="cursors_mac"):
                     self.path("*.tif")
@@ -1052,7 +1054,7 @@ class DarwinManifest(ViewerManifest):
                         application])
                 self.run_command(['codesign', '--verify', '--deep', '--verbose', application])
 
-        vol_icon = self.src_path_of(os.path.join(self.icon_path(), 'alchemy.icns'))
+        vol_icon = self.src_path_of(os.path.join(self.icon_path(), 'ayachemy.icns'))
         dmgoptions = {
             'format': 'ULFO',
             'compression_level': 9,

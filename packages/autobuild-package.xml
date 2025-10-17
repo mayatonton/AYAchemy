@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<llsd>
+<map>
+    <key>version</key>
+    <string>1</string>
+    <key>type</key>
+    <string>metadata</string>
+    <key>build_id</key>
+    <string>9427245893</string>
+    <key>platform</key>
+    <string>common</string>
+    <key>configuration</key>
+    <string>default</string>
+    <key>package_description</key>
+    <map>
+      <key>license</key>
+      <string>All Rights Reserved.</string>
+      <key>license_file</key>
+      <string>LICENSES/branding.txt</string>
+      <key>copyright</key>
+      <string>Copyright (c) 2024 Alchemy Development Group</string>
+      <key>version</key>
+      <string>1.0.0</string>
+      <key>name</key>
+      <string>branding</string>
+      <key>vcs_branch</key>
+      <string>refs/tags/v1.0.0-383e3ba</string>
+      <key>vcs_revision</key>
+      <string>383e3ba43630843fcd75b037606f4093fa378665</string>
+      <key>vcs_url</key>
+      <string>git://github.com/AlchemyViewer/viewer-branding.git</string>
+      <key>canonical_repo</key>
+      <string>https://github.com/AlchemyViewer/viewer-branding</string>
+      <key>description</key>
+      <string>Alchemy Branding Material</string>
+    </map>
+    <key>manifest</key>
+    <array>
+      <string>LICENSES/branding.txt</string>
+      <string>branding/viewer</string>
+      <string>branding/installer</string>
+    </array>
+  </map>
+</llsd>
