@@ -16564,5 +16564,97 @@
   <key>Value</key><string>4698fb47-ac92-10f0-51fa-206a25df861f</string>
 </map>
   <!-- Pose Stand -->
+<!-- chat-async -->
+<key>ChatAsyncEnabled</key>
+<map>
+  <key>Comment</key>
+  <string>Use asynchronous chat pipeline with short jitter buffer.</string>
+  <key>Persist</key>
+  <integer>1</integer>
+  <key>Type</key>
+  <string>Boolean</string>
+  <key>Value</key>
+  <integer>1</integer>
+</map>
+<key>ChatAsyncJitterMs</key>
+<map>
+  <key>Comment</key>
+  <string>Jitter buffer hold time in milliseconds for chat ordering.</string>
+  <key>Persist</key>
+  <integer>1</integer>
+  <key>Type</key>
+  <string>U32</string>
+  <key>Value</key>
+  <integer>200</integer>
+</map>
+<key>ChatAsyncAutoJitter</key>
+<map>
+  <key>Comment</key>
+  <string>Automatically tune chat jitter based on recent arrival jitter.</string>
+  <key>Persist</key>
+  <integer>1</integer>
+  <key>Type</key>
+  <string>Boolean</string>
+  <key>Value</key>
+  <integer>1</integer>
+</map>
+<key>ChatAsyncJitterMinMs</key>
+<map>
+  <key>Comment</key>
+  <string>Minimum auto jitter (ms).</string>
+  <key>Persist</key>
+  <integer>1</integer>
+  <key>Type</key>
+  <string>U32</string>
+  <key>Value</key>
+  <integer>80</integer>
+</map>
+<key>ChatAsyncJitterMaxMs</key>
+<map>
+  <key>Comment</key>
+  <string>Maximum auto jitter (ms).</string>
+  <key>Persist</key>
+  <integer>1</integer>
+  <key>Type</key>
+  <string>U32</string>
+  <key>Value</key>
+  <integer>600</integer>
+</map>
+<!-- chat-async -->
+<!-- 非同期チャットログ -->
+<key>ChatLogAsyncEnabled</key>
+<map>
+  <key>Comment</key>
+  <string>Write chat logs asynchronously to avoid UI stalls.</string>
+  <key>Persist</key>
+  <integer>1</integer>
+  <key>Type</key>
+  <string>Boolean</string>
+  <key>Value</key>
+  <integer>1</integer>
+</map>
+<key>ChatLogFlushIntervalMs</key>
+<map>
+  <key>Comment</key>
+  <string>Flush interval (ms) for batching chat logs.</string>
+  <key>Persist</key>
+  <integer>1</integer>
+  <key>Type</key>
+  <string>U32</string>
+  <key>Value</key>
+  <integer>200</integer>
+</map>
+<key>ChatLogFlushBatch</key>
+<map>
+  <key>Comment</key>
+  <string>Max number of chat lines per flush batch.</string>
+  <key>Persist</key>
+  <integer>1</integer>
+  <key>Type</key>
+  <string>U32</string>
+  <key>Value</key>
+  <integer>64</integer>
+</map>
+<!-- 非同期チャットログ -->
 </map>
 </llsd>

@@ -80,6 +80,8 @@
 
 #include <array>
 
+#include "llchatlog_async.h"
+
 const static std::string ADHOC_NAME_SUFFIX(" Conference");
 
 const static std::string NEARBY_P2P_BY_OTHER("nearby_P2P_by_other");
@@ -1666,7 +1668,10 @@ bool LLIMModel::addToHistory(const LLUUID& session_id,
     return true;
 }
 
-bool LLIMModel::logToFile(const std::string& file_name, const std::string& from, const LLUUID& from_id, const std::string& utf8_text)
+bool LLIMModel::logToFile(const std::string& file_name,
+                          const std::string& from,
+                          const LLUUID& from_id,
+                          const std::string& utf8_text)
 {
     if (gSavedPerAccountSettings.getS32("KeepConversationLogTranscripts") > 1)
     {
@@ -1680,8 +1685,20 @@ bool LLIMModel::logToFile(const std::string& file_name, const std::string& from,
             from_name = av_name.getCompleteName();
         }
 
-        LLLogChat::saveHistory(file_name, from_name, from_id, utf8_text);
-        LLConversationLog::instance().cache(); // update the conversation log too
+        // 非同期ログへ置換（IMはセッション固有のファイル名を渡す）
+        LLChat async_chat;
+        async_chat.mFromName = from_name;
+        async_chat.mFromID   = from_id;
+        async_chat.mText     = utf8_text;
+        async_chat.mTime     = (F32)LLFrameTimer::getElapsedSeconds();
+
+        LLSD log_args;
+        log_args["log_name"] = file_name;
+
+        ChatLogAsync::instance().enqueue(async_chat, log_args);
+
+        // 会話ログのキャッシュ更新は従来通りUI側で
+        LLConversationLog::instance().cache();
         return true;
     }
     else

@@ -159,6 +159,8 @@ set(viewer_SOURCE_FILES
     llbuycurrencyhtml.cpp
     llcallingcard.cpp
     llchannelmanager.cpp
+    llchat_async.cpp
+    llchatlog_async.cpp
     llchatbar.cpp
     llchathistory.cpp
     llchatitemscontainerctrl.cpp
@@ -912,6 +914,8 @@ set(viewer_HEADER_FILES
     llcallingcard.h
     llcapabilityprovider.h
     llchannelmanager.h
+    llchat_async.h
+    llchatlog_async.h
     llchatbar.h
     llchathistory.h
     llchatitemscontainerctrl.h
