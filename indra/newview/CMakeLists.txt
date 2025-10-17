@@ -1679,17 +1679,17 @@ if (WINDOWS)
     message(STATUS "Copying icons for ${ICON_PATH}")
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/alchemy.ico"
+        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy.ico"
         "${CMAKE_CURRENT_SOURCE_DIR}/res/ll_icon.ico"
       )
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/alchemy_256.BMP"
+        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy_256.BMP"
         "${CMAKE_CURRENT_SOURCE_DIR}/res/ll_icon.BMP"
       )
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/alchemy_256.BMP"
+        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy_256.BMP"
         "${CMAKE_CURRENT_SOURCE_DIR}/res-sdl/ll_icon.BMP"
       )
     execute_process(

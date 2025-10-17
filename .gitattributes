@@ -54,3 +54,16 @@ indra/newview/installers/windows/FILES_ARE_UNICODE_UTF-16LE.txt -text
 # Exclude files from exporting
 .gitattributes export-ignore
 .gitignore     export-ignore
+
+# fonts & icons are binary
+*.ttf  binary
+*.otf  binary
+*.ttc  binary
+*.icns binary
+*.ico  binary
+*.png  binary
+*.BMP  binary
+*.zst  binary
+
+# license text files are text with LF
+*License.txt text eol=lf
