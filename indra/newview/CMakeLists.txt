@@ -1676,30 +1676,45 @@ if (WINDOWS)
         set(ICON_PATH "project")
         set(VIEWER_MACOSX_PHASE "a")
     endif()
-    message(STATUS "Copying icons for ${ICON_PATH}")
+    # message(STATUS "Copying icons for ${ICON_PATH}")
+    # Prefer source-local branding first, then fall back to prebuilt
+    set(BRANDING_ICONS_SRC "${CMAKE_SOURCE_DIR}/../packages/branding/viewer/icons/${ICON_PATH}")
+    if(NOT EXISTS "${BRANDING_ICONS_SRC}/ayachemy.ico")
+      set(BRANDING_ICONS_SRC "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}")
+    endif()
+    set(BRANDING_INSTALLER_ICONS_SRC "${CMAKE_SOURCE_DIR}/../packages/branding/installer/icons")
+    if(NOT EXISTS "${BRANDING_INSTALLER_ICONS_SRC}/install_icon.ico")
+      set(BRANDING_INSTALLER_ICONS_SRC "${LIBS_PREBUILT_DIR}/branding/installer/icons")
+    endif()
+    message(STATUS "Copying icons for ${ICON_PATH} from: ${BRANDING_ICONS_SRC}")
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy.ico"
+        # "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy.ico"
+        "${BRANDING_ICONS_SRC}/ayachemy.ico"
         "${CMAKE_CURRENT_SOURCE_DIR}/res/ll_icon.ico"
       )
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy_256.BMP"
+        # "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy_256.BMP"
+        "${BRANDING_ICONS_SRC}/ayachemy_256.BMP"
         "${CMAKE_CURRENT_SOURCE_DIR}/res/ll_icon.BMP"
       )
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy_256.BMP"
+        # "${LIBS_PREBUILT_DIR}/branding/viewer/icons/${ICON_PATH}/ayachemy_256.BMP"
+        "${BRANDING_ICONS_SRC}/ayachemy_256.BMP"
         "${CMAKE_CURRENT_SOURCE_DIR}/res-sdl/ll_icon.BMP"
       )
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${LIBS_PREBUILT_DIR}/branding/installer/icons/install_icon.ico"
+        # "${LIBS_PREBUILT_DIR}/branding/installer/icons/install_icon.ico"
+        "${BRANDING_INSTALLER_ICONS_SRC}/install_icon.ico"
         "${CMAKE_CURRENT_SOURCE_DIR}/installers/windows/install_icon.ico"
       )
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${LIBS_PREBUILT_DIR}/branding/installer/icons/uninstall_icon.ico"
+        # "${LIBS_PREBUILT_DIR}/branding/installer/icons/uninstall_icon.ico"
+        "${CMAKE_CURRENT_SOURCE_DIR}/installers/windows/uninstall_icon.ico"
         "${CMAKE_CURRENT_SOURCE_DIR}/installers/windows/uninstall_icon.ico"
       )
 
