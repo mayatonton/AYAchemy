@@ -491,7 +491,7 @@ BOOL LLManipRotate::handleMouseUp(S32 x, S32 y, MASK mask)
         mManipPart = LL_NO_PART;
 
         // Might have missed last update due to timing.
-        LLSelectMgr::getInstance()->sendMultipleUpdate( UPD_ROTATION | UPD_POSITION );
+        LLSelectMgr::getInstance()->requestEditUpdate( UPD_ROTATION | UPD_POSITION );
         LLSelectMgr::getInstance()->enableSilhouette(TRUE);
         //gAgent.setObjectTracking(gSavedSettings.getBOOL("TrackFocusObject"));
 
