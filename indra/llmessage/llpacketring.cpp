@@ -44,6 +44,107 @@
 #include "u64.h"
 #include "llmessagelog.h"
 
+// ===== AYAchemy: UDP send pacing & burst control (cpp-local, header untouched) =====
+#include <cstdlib>   // std::getenv, std::strtoul
+#include <cstring>   // std::strlen
+
+// If this cpp is built in a viewer layer that exposes Debug Settings, prefer them.
+#if defined(LL_VIEWER)
+#   include "llviewercontrol.h" // gSavedSettings
+#endif
+
+namespace {
+    struct UdpPacingState {
+        bool loaded = false;
+        // Tunables (can be overridden via Debug Settings or env vars)
+        U32 min_gap_us = 0;   // UdpMinSendGapUsec, 0 = disabled (preserve legacy behavior)
+        U32 win_ms     = 10;  // UdpBurstWindowMs
+        U32 per_win    = 20;  // UdpBurstPerWindow
+        // Runtime state
+        U64 last_send_us = 0;
+        U64 win_start_us = 0;
+        U32 sent_in_win  = 0;
+    };
+    static UdpPacingState s_udp;
+
+    inline U64 now_us()
+    {
+        // LLTimer::getTotalTime() returns 100-ns units
+        return (U64)(LLTimer::getTotalTime() / 10);
+    }
+
+    inline U32 getenv_u32(const char* key, U32 def)
+    {
+        const char* v = std::getenv(key);
+        if (!v || !*v) return def;
+        char* endp = NULL;
+        unsigned long val = std::strtoul(v, &endp, 10);
+        if (endp == v) return def;
+        if (val > 0xFFFFFFFFul) val = 0xFFFFFFFFul;
+        return (U32)val;
+    }
+
+    inline void load_tunables_once()
+    {
+        if (s_udp.loaded) return;
+
+        // 1) Prefer Debug Settings when available (viewer layer)
+        #if defined(LL_VIEWER)
+        if (gSavedSettings.controlExists("UdpMinSendGapUsec"))
+            s_udp.min_gap_us = gSavedSettings.getU32("UdpMinSendGapUsec");
+        if (gSavedSettings.controlExists("UdpBurstWindowMs"))
+            s_udp.win_ms = gSavedSettings.getU32("UdpBurstWindowMs");
+        if (gSavedSettings.controlExists("UdpBurstPerWindow"))
+            s_udp.per_win = gSavedSettings.getU32("UdpBurstPerWindow");
+        #endif
+
+        // 2) Allow env var overrides (works in any layer)
+        s_udp.min_gap_us = getenv_u32("AYACHEMY_UDP_MIN_GAP_USEC",      s_udp.min_gap_us);
+        s_udp.win_ms     = getenv_u32("AYACHEMY_UDP_BURST_WINDOW_MS",   s_udp.win_ms);
+        s_udp.per_win    = getenv_u32("AYACHEMY_UDP_BURST_PER_WINDOW",  s_udp.per_win);
+
+        s_udp.loaded = true;
+    }
+
+    inline bool should_queue_now()
+    {
+        load_tunables_once();
+        const U64 t = now_us();
+
+        // Minimum inter-send gap
+        if (s_udp.min_gap_us && s_udp.last_send_us)
+        {
+            if (t - s_udp.last_send_us < (U64)s_udp.min_gap_us)
+            {
+                return true;
+            }
+        }
+
+        // Burst limiter (sliding window)
+        if (s_udp.per_win && s_udp.win_ms)
+        {
+            const U64 win_us = (U64)s_udp.win_ms * 1000ULL;
+            if (s_udp.win_start_us == 0 || (t - s_udp.win_start_us) >= win_us)
+            {
+                s_udp.win_start_us = t;
+                s_udp.sent_in_win  = 0;
+            }
+            if (s_udp.sent_in_win >= s_udp.per_win)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    inline void note_sent_ok()
+    {
+        s_udp.last_send_us = now_us();
+        if (s_udp.per_win) ++s_udp.sent_in_win;
+    }
+} // namespace
+// ===== end AYAchemy pacing block =====
+
 ///////////////////////////////////////////////////////////
 LLPacketRing::LLPacketRing () :
     mUseInThrottle(FALSE),
@@ -279,11 +380,43 @@ BOOL LLPacketRing::sendPacket(int h_socket, char * send_buffer, S32 buf_size, co
     BOOL status = TRUE;
     if (!mUseOutThrottle)
     {
-        return sendPacketImpl(h_socket, send_buffer, buf_size, host );
+        // ===== AYAchemy: apply pacing even when throttle is off =====
+        if (should_queue_now())
+        {
+            if (mOutBufferLength + buf_size > mMaxBufferLength)
+            {
+                // Overflow: drop to preserve legacy behavior on overrun
+                LL_WARNS() << "Throwing away outbound packet, overflowing buffer" << LL_ENDL;
+                return TRUE;
+            }
+            LLPacketBuffer* packetp = new LLPacketBuffer(host, send_buffer, buf_size);
+            mOutBufferLength += packetp->getSize();
+            mSendQueue.push(packetp);
+            return TRUE; // queued; will be flushed by subsequent calls
+        }
+
+        status = sendPacketImpl(h_socket, send_buffer, buf_size, host );
+        if (status) { note_sent_ok(); }
+        return status;
     }
     else
     {
         mActualBitsOut += buf_size * 8;
+
+        // ===== AYAchemy: also honor pacing when throttle is ON =====
+        if (should_queue_now())
+        {
+            if (mOutBufferLength + buf_size > mMaxBufferLength)
+            {
+                LL_WARNS() << "Throwing away outbound packet, overflowing buffer" << LL_ENDL;
+                return TRUE;
+            }
+            LLPacketBuffer* qp = new LLPacketBuffer(host, send_buffer, buf_size);
+            mOutBufferLength += qp->getSize();
+            mSendQueue.push(qp);
+            // Do not return here: the while-loop below will try draining queue as bandwidth allows
+        }
+
         LLPacketBuffer *packetp = NULL;
         // See if we've got enough throttle to send a packet.
         while (!mOutThrottle.checkOverflow(0.f))
@@ -301,6 +434,7 @@ BOOL LLPacketRing::sendPacket(int h_socket, char * send_buffer, S32 buf_size, co
                 packet_size = packetp->getSize();
 
                 status = sendPacketImpl(h_socket, packetp->getData(), packet_size, packetp->getHost());
+                if (status) { note_sent_ok(); }
 
                 delete packetp;
                 // Update the throttle
@@ -310,6 +444,7 @@ BOOL LLPacketRing::sendPacket(int h_socket, char * send_buffer, S32 buf_size, co
             {
                 // If the queue's empty, we can just send this packet right away.
                 status =  sendPacketImpl(h_socket, send_buffer, buf_size, host );
+                if (status) { note_sent_ok(); }
                 packet_size = buf_size;
 
                 // Update the throttle

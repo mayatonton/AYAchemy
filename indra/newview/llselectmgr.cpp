@@ -275,6 +275,7 @@ void LLSelectMgr::clearSelections()
 void LLSelectMgr::update()
 {
     mSelectedObjects->cleanupNodes();
+    idleFlush(); // AYAchemy: send a final update once input has been idle for a short time
 }
 
 void LLSelectMgr::updateEffects()
@@ -8525,6 +8526,62 @@ void LLSelectMgr::sendSelectionMove()
 
     //saveSelectedObjectTransform(SELECT_ACTION_TYPE_PICK);
 }
+
+void LLSelectMgr::setEditUpdateDebounce(F32 sec)
+{
+    m_edit_debounce_sec = llclamp(sec, 0.0f, 1.0f); // 0〜1秒の安全域
+}
+
+void LLSelectMgr::requestEditUpdate(U32 update_bits)
+{
+    // 最新要求をORで蓄積（中間は捨て、常に最新が勝つ設計）
+    m_edit_pending_bits |= update_bits;
+
+    // 入力が来た → アイドル計測を更新
+    if (!m_edit_idle_timer.getStarted()) m_edit_idle_timer.start();
+    m_edit_idle_timer.reset();
+
+    // 必要ならこのタイミングで送る（デバウンス）
+    maybeSendDebounced();
+}
+
+void LLSelectMgr::maybeSendDebounced()
+{
+    // デバウンス間隔未満なら送らない
+    if (m_edit_send_timer.getStarted() &&
+        m_edit_send_timer.getElapsedTimeF32() < m_edit_debounce_sec)
+    {
+        return;
+    }
+    if (m_edit_pending_bits == 0)
+    {
+        return;
+    }
+
+    // まとめ送信（中間を捨て、最新だけ反映）
+    sendMultipleUpdate(m_edit_pending_bits);
+
+    // リセット＆タイマ再始動
+    m_edit_pending_bits = 0;
+    if (!m_edit_send_timer.getStarted()) m_edit_send_timer.start();
+    m_edit_send_timer.reset();
+}
+
+void LLSelectMgr::idleFlush()
+{
+    // 入力が止まって一定時間経過 → 保険で最終値をもう一度だけ送る
+    if (!m_edit_idle_timer.getStarted()) return;
+    const F32 idle = m_edit_idle_timer.getElapsedTimeF32();
+    if (idle < m_edit_idle_sec) return;
+
+    // 軽量に“位置/回転/スケール”を一括送信
+    const U32 all_bits = UPD_POSITION | UPD_ROTATION | UPD_SCALE;
+    sendMultipleUpdate(all_bits);
+
+    // 次の入力に備える
+    m_edit_idle_timer.stop();
+}
+
 
 template<>
 bool LLCheckIdenticalFunctor<F32>::same(const F32& a, const F32& b, const F32& tolerance)

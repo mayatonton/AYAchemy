@@ -500,6 +500,12 @@ public:
     void update();
     void updateEffects(); // Update HUD effects
 
+    // === AYAchemy: debounced edit-update API (public) ===
+    // ドラッグ中：位置/回転/スケールのビットをORで貯める
+    void requestEditUpdate(U32 update_bits);
+    // 任意：デバウンス間隔（秒）を調整。デフォルト 0.08 (=80ms)
+    void setEditUpdateDebounce(F32 sec);
+    
     // When we edit object's position/rotation/scale we set local
     // overrides and ignore any updates (override received valeus).
     // When we send data to server, we send local values and reset
@@ -856,6 +862,19 @@ public:
     void promoteSelectionToRoot();
     void demoteSelectionToIndividuals();
 
+// === AYAchemy: debounced edit-update state (private) ===
+private:
+    // デバウンス条件を満たしたら送る
+    void maybeSendDebounced();
+    // 入力停止を検知したら最終値をもう一度送る（軽い追い打ち）
+    void idleFlush();
+
+    U32          m_edit_pending_bits = 0;   // 溜めている更新ビット（UPD_POSITION 等をOR）
+    LLFrameTimer m_edit_send_timer;         // 最後に送ってからの経過（デバウンス用）
+    LLFrameTimer m_edit_idle_timer;         // 最後の入力からの経過（停止検知）
+    F32          m_edit_debounce_sec = 0.08f; // 50〜100ms 推奨（既定 80ms）
+    F32          m_edit_idle_sec     = 0.15f; // 150ms 程度（“止まった”判定）
+    
 private:
     void convertTransient(); // converts temporarily selected objects to full-fledged selections
     ESelectType getSelectTypeForObject(LLViewerObject* object);
