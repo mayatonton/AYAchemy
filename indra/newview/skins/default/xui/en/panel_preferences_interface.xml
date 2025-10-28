@@ -335,27 +335,31 @@
     <item
         label="IBM Plex Sans"
         name="ibmplex"
-        value="font_main_ibmplex.xml"/>
+        value="skins/default/xui/en/font_main_ibmplex.xml"/>
     <item
         label="IBM Plex Mono"
         name="ibmplexmono"
-        value="font_main_ibmplexmono.xml"/>
+        value="skins/default/xui/en/font_main_ibmplexmono.xml"/>
     <item
         label="Open Dyslexic"
         name="opendyslexic"
-        value="font_main_opendyslexic.xml"/>
+        value="skins/default/xui/en/font_main_opendyslexic.xml"/>
     <item
-		label="Noto Sans"
-		name="notosans"
-		value="font_main_notosans.xml"/>
+		    label="Noto Sans"
+		    name="notosans"
+		    value="skins/default/xui/en/font_main_notosans.xml"/>
+    <item
+        label="Noto Sans CJK JP"
+        name="notocjk_jp"
+        value="skins/default/xui/en/font_main_noto_cjk_jp.xml"/>
     <item
         label="Source Sans 3"
         name="sourcesans"
-        value="font_main_sourcesans.xml"/>
+        value="skins/default/xui/en/font_main_sourcesans.xml"/>
     <item
         label="Ubuntu"
         name="ubuntu"
-        value="font_main_ubuntu.xml"/>
+        value="skins/default/xui/en/font_main_ubuntu.xml"/>
   </combo_box>
   <text
   layout="topleft"
@@ -383,18 +387,22 @@ Monospace Font(restart required):
     <item
         label="IBM Plex Mono"
         name="ibmplexmono"
-        value="font_mono_ibmplex.xml"/>
+        value="skins/default/xui/en/font_mono_ibmplex.xml"/>
     <item
         label="Noto Sans Mono"
         name="notosansmono"
-        value="font_mono_notosans.xml"/>
+        value="skins/default/xui/en/font_mono_notosans.xml"/>
+    <item
+        label="DejaVu Mono + JP Fallback"
+        name="mono_plus_cjk"
+        value="skins/default/xui/en/font_mono_dejavu_plus_cjk.xml"/>
     <item
         label="Source Code Pro"
         name="sourcecodepro"
-        value="font_mono_sourcecodepro.xml"/>
+        value="skins/default/xui/en/font_mono_sourcecodepro.xml"/>
     <item
         label="Ubuntu Mono"
         name="ubuntumono"
-        value="font_mono_ubuntu.xml"/>
+        value="skins/default/xui/en/font_mono_ubuntu.xml"/>
   </combo_box>
 </panel>

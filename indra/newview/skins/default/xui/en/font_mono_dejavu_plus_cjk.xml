@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<fonts>
+  <!-- 通常 -->
+  <font name="Monospace">
+    <file>DejaVuSansMono.ttf</file>
+    <file load_collection="true">NotoSansCJK-Regular.ttc</file>
+  </font>
+
+  <!-- ボールド -->
+  <font name="Monospace" font_style="BOLD">
+    <file>DejaVuSansMono-Bold.ttf</file>
+    <file load_collection="true">NotoSansCJK-Bold.ttc</file>
+  </font>
+
+  <!-- イタリック -->
+  <font name="Monospace" font_style="ITALIC">
+    <file>DejaVuSansMono-Oblique.ttf</file>
+  </font>
+  <font name="Monospace" font_style="BOLD|ITALIC">
+    <file>DejaVuSansMono-BoldOblique.ttf</file>
+  </font>
+
+  <font_size name="Huge"   size="16.0"/>
+  <font_size name="Large"  size="11.4"/>
+  <font_size name="Medium" size="9.4"/>
+  <font_size name="Small"  size="8.4"/>
+</fonts>
