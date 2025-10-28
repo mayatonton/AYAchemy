@@ -16656,46 +16656,5 @@
     <integer>64</integer>
   </map>
   <!-- 非同期チャットログ -->
-  <!-- ===== UDP pacing / burst control (AYAchemy) ===== -->
-  <key>UdpMinSendGapUsec</key>
-  <map>
-    <key>Label</key>
-    <string>UDP Min Send Gap (usec)</string>
-    <key>Comment</key>
-    <string>0=disabled. If non-zero, packets sent closer than this gap (microseconds) are queued instead of immediately sent.</string>
-    <key>Type</key>
-    <string>U32</string>
-    <key>Value</key>
-    <integer>0</integer>
-    <key>Persist</key>
-    <integer>1</integer>
-  </map>
-  <key>UdpBurstWindowMs</key>
-  <map>
-    <key>Label</key>
-    <string>UDP Burst Window (ms)</string>
-    <key>Comment</key>
-    <string>Sliding window length (milliseconds) used to count sent packets for burst limiting.</string>
-    <key>Type</key>
-    <string>U32</string>
-    <key>Value</key>
-    <integer>10</integer>
-    <key>Persist</key>
-    <integer>1</integer>
-  </map>
-  <key>UdpBurstPerWindow</key>
-  <map>
-    <key>Label</key>
-    <string>UDP Burst Per Window</string>
-    <key>Comment</key>
-    <string>Maximum number of packets allowed within each burst window. Excess packets are queued.</string>
-    <key>Type</key>
-    <string>U32</string>
-    <key>Value</key>
-    <integer>20</integer>
-    <key>Persist</key>
-    <integer>1</integer>
-  </map>
-  <!-- ===== UDP pacing / burst control (AYAchemy) ===== -->
 </map>
 </llsd>

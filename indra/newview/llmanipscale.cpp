@@ -403,7 +403,7 @@ BOOL LLManipScale::handleMouseUp(S32 x, S32 y, MASK mask)
         mManipPart = LL_NO_PART;
 
         // Might have missed last update due to UPDATE_DELAY timing
-        select_mgr.requestEditUpdate( mLastUpdateFlags );
+        select_mgr.sendMultipleUpdate( mLastUpdateFlags );
 
         //gAgent.setObjectTracking(gSavedSettings.getBOOL("TrackFocusObject"));
         select_mgr.saveSelectedObjectTransform(SELECT_ACTION_TYPE_PICK);
@@ -1213,7 +1213,7 @@ void LLManipScale::sendUpdates( BOOL send_position_update, BOOL send_scale_updat
         // enforce minimum update delay and don't stream updates on sub-object selections
         if( elapsed_time > UPDATE_DELAY && !ALControlCache::EditLinkedParts )
         {
-            LLSelectMgr::getInstance()->requestEditUpdate( update_flags );
+            LLSelectMgr::getInstance()->sendMultipleUpdate( update_flags );
             update_timer.reset();
             mSendUpdateOnMouseUp = FALSE;
         }

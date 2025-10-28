@@ -1059,7 +1059,7 @@ BOOL LLManipTranslate::handleMouseUp(S32 x, S32 y, MASK mask)
         LLSelectMgr::getInstance()->enableSilhouette(TRUE);
 
         // Might have missed last update due to UPDATE_DELAY timing.
-        LLSelectMgr::getInstance()->requestEditUpdate( UPD_POSITION );
+        LLSelectMgr::getInstance()->sendMultipleUpdate( UPD_POSITION );
 
         mInSnapRegime = FALSE;
         LLSelectMgr::getInstance()->saveSelectedObjectTransform(SELECT_ACTION_TYPE_PICK);
