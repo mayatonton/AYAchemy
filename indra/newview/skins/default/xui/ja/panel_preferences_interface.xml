@@ -54,6 +54,7 @@
 		<item label="IBM Plex Mono" name="ibmplexmono"/>
 		<item label="Open Dyslexic" name="opendyslexic"/>
 		<item label="Noto Sans" name="notosans"/>
+		<item label="Noto Sans CJK（日本語）" name="notocjk_jp" value="skins/default/xui/en/font_main_noto_cjk_jp.xml"/>
 		<item label="源ノ角ゴシック" name="sourcesans"/>
 		<item label="Ubuntu" name="ubuntu"/>
 	</combo_box>
@@ -64,6 +65,7 @@
 		<item label="Deja Vu Sans Mono" name="dejavumono"/>
 		<item label="IBM Plex Mono" name="ibmplexmono"/>
 		<item label="Noto Sans Mono" name="notosansmono"/>
+		<item label="等幅 + 日本語フォールバック" name="mono_plus_cjk" value="skins/default/xui/en/font_mono_dejavu_plus_cjk.xml"/>
 		<item label="源ノ角ゴシック" name="sourcecodepro"/>
 		<item label="Ubuntu Mono" name="ubuntumono"/>
 	</combo_box>

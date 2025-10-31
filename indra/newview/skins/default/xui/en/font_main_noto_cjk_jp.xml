@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<fonts>
+  <!-- 通常（日本語を最優先） -->
+  <font name="SansSerif">
+    <file>NotoSansJP-Regular.ttf</file>
+    <file>NotoSans-Regular.otf</file>
+    <!-- 絵文字を使う場合は下を有効に -->
+    <!-- <file functor="is_emoji">TwemojiSVG.ttf</file> -->
+  </font>
+
+  <!-- ボールド -->
+  <font name="SansSerif" font_style="BOLD">
+    <file>NotoSansJP-Bold.ttf</file>
+    <file>NotoSans-Bold.otf</file>
+  </font>
+
+  <!-- イタリック（JP には実体がないのでラテン側で補完） -->
+  <font name="SansSerif" font_style="ITALIC">
+    <file>NotoSans-Italic.otf</file>
+  </font>
+  <font name="SansSerif" font_style="BOLD|ITALIC">
+    <file>NotoSans-BoldItalic.otf</file>
+  </font>
+
+  <font_size name="Huge"   size="16.0"/>
+  <font_size name="Large"  size="11.4"/>
+  <font_size name="Medium" size="9.4"/>
+  <font_size name="Small"  size="8.4"/>
+</fonts>

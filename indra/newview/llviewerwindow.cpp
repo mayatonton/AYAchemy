@@ -2116,9 +2116,8 @@ LLViewerWindow::LLViewerWindow(const Params& p)
     LLNotifications::instance().setIgnoreAllNotifications(ignore);
     if (ignore)
     {
-    LL_INFOS() << "NOTE: ALL NOTIFICATIONS THAT OCCUR WILL GET ADDED TO IGNORE LIST FOR LATER RUNS." << LL_ENDL;
+        LL_INFOS() << "NOTE: ALL NOTIFICATIONS THAT OCCUR WILL GET ADDED TO IGNORE LIST FOR LATER RUNS." << LL_ENDL;
     }
-
 
     /*
     LLWindowCallbacks* callbacks,
@@ -2209,6 +2208,7 @@ LLViewerWindow::LLViewerWindow(const Params& p)
     }
 
     LLFontManager::initClass();
+
     // Init font system, load default fonts and generate basic glyphs
     // currently it takes aprox. 0.5 sec and we would load these fonts anyway
     // before login screen.
@@ -2219,10 +2219,86 @@ LLViewerWindow::LLViewerWindow(const Params& p)
     strFontOverride = gSavedSettings.getString("FontOverrideMonospace");
     if (!strFontOverride.empty())
         font_files.push_back(strFontOverride);
+
+    // === DIAG + RESOLUTION: 追加XMLの場所を skins/<skin>/xui/<lang> → en → default に補完してから渡す ===
+    {
+        const std::string skin = gSavedSettings.getString("SkinCurrent");
+        const std::string lang = LLUI::getLanguage();
+        const std::string app  = gDirUtilp->getAppRODataDir();
+
+        auto join_path = [](const std::string& a, const std::string& b) {
+            if (a.empty()) return b;
+            char last = a.back();
+            if (last == '/' || last == '\\') return a + b;
+            return a + "/" + b;
+        };
+        auto to_abs = [&](const std::string& rel) {
+            return join_path(app, rel);
+        };
+        auto exists_abs = [&](const std::string& rel) {
+            return LLFile::isfile(to_abs(rel));
+        };
+
+        LL_INFOS("Fonts") << "FontOverrideMain='" << gSavedSettings.getString("FontOverrideMain")
+                          << "' FontOverrideMonospace='" << gSavedSettings.getString("FontOverrideMonospace") << "'" << LL_ENDL;
+        LL_INFOS("Fonts") << "appRODataDir='" << app
+                          << "' skin='" << skin << "' lang='" << lang << "'" << LL_ENDL;
+
+        for (size_t i = 0; i < font_files.size(); ++i)
+        {
+            const std::string f = font_files[i];
+            std::string resolved;
+
+            // 候補（上から優先）。fonts.xml も含め、default フォールバックまで見る
+            auto build_candidates = [&](const std::string& name) {
+                std::vector<std::string> v;
+                v.push_back("skins/" + skin    + "/xui/" + lang + "/" + name);
+                v.push_back("skins/" + skin    + "/xui/en/"      + name);
+                v.push_back("skins/default/xui/" + lang + "/" + name);
+                v.push_back("skins/default/xui/en/"      + name);
+                v.push_back(name); // 最後に素の名前（従来動作）
+                return v;
+            };
+
+            // パス無しなら候補を総当たり、パス付きはそのまま
+            if (f.find('/') == std::string::npos && f.find('\\') == std::string::npos)
+            {
+                for (const auto& r : build_candidates(f))
+                {
+                    if (exists_abs(r)) { resolved = r; break; }
+                }
+                if (!resolved.empty())
+                {
+                    // "fonts.xml"（i==0）は参照だけ、オーバーライドは補完した実体に置換
+                    if (i > 0) font_files[i] = resolved;
+                }
+            }
+            else
+            {
+                resolved = f;
+            }
+
+            if (!resolved.empty() && exists_abs(resolved))
+                LL_INFOS("Fonts") << "will pass: rel='" << f << "' resolved='" << to_abs(resolved) << "'" << LL_ENDL;
+            else
+                LL_WARNS("Fonts") << "will pass: rel='" << f << "' (not found in expected locations: skins/<skin|default>/xui/<lang|en>/)" << LL_ENDL;
+        }
+    }
+    // === DIAG + RESOLUTION END ===
+
     LLFontGL::initClass(font_files, gSavedSettings.getF32("FontScreenDPI"),
         mDisplayScale.mV[VX],
         mDisplayScale.mV[VY],
         gDirUtilp->getAppRODataDir());
+
+    // === DIAG: post init sanity ===
+    {
+        LLFontGL* sans = LLFontGL::getFontSansSerif();
+        LLFontGL* mono = LLFontGL::getFontMonospace();
+        LL_INFOS("Fonts") << "post-init: SansSerif=" << (void*)sans
+                          << " Monospace=" << (void*)mono << LL_ENDL;
+    }
+    // === DIAG END ===
 
     //
     // We want to set this stuff up BEFORE we initialize the pipeline, so we can turn off
@@ -2285,6 +2361,7 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 
     mWorldViewRectScaled = calcScaledRect(mWorldViewRectRaw, mDisplayScale);
 }
+
 
 std::string LLViewerWindow::getLastSnapshotDir()
 {
